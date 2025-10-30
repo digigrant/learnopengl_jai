@@ -4,7 +4,7 @@
 MAX_INFO_LOG_LENGTH :: 512;
 
 // Compiles shaders and creates shader program
-ShaderCreate :: (vertexShaderCode : string, fragmentShaderCode : string) -> u32 {
+CreateShader :: (vertexShaderCode : string, fragmentShaderCode : string) -> shaderId : u32 {
     success : s32;
     infoLog : string;
 
@@ -47,8 +47,4 @@ ShaderCreate :: (vertexShaderCode : string, fragmentShaderCode : string) -> u32 
     // In the old system we allocated a Shader object and returned the pointer to
     // that, but it only had the ID in it, so I dont see a huge reason to do that.
     return shader;
-}
-
-ShaderUse :: (shader : u32) {
-    glUseProgram(shader);
 }

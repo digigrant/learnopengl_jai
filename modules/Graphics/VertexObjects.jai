@@ -6,7 +6,7 @@ VertexAttribute :: struct {
     size : u8; // must be 1-4
 };
 
-VertexObjectsCreate :: (vertices : [] float, usage : GLenum, attributes : [] VertexAttribute) -> VAO : u32, VBO : u32 {
+CreateVertexObjects :: (vertices : [] float, attributes : [] VertexAttribute) -> VAO : u32, VBO : u32 {
     VAO, VBO : u32;
 
     glGenVertexArrays(1, *VAO);
@@ -16,15 +16,16 @@ VertexObjectsCreate :: (vertices : [] float, usage : GLenum, attributes : [] Ver
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
     // load vertex data into buffer
-    glBufferData(GL_ARRAY_BUFFER, vertices.count * size_of(float), vertices.data, usage);
+    // may want to add usage type as an argument but for right now we only use GL_STATIC_DRAW
+    glBufferData(GL_ARRAY_BUFFER, vertices.count * size_of(float), vertices.data, GL_STATIC_DRAW);
     
     // configure vertex attributes
     strideLength : u32 = 0;
     for attribute : attributes strideLength += attribute.size;
     currentStart := 0;
     for attribute, index : attributes {
-        glEnableVertexAttribArray(cast(u32) index);
-        glVertexAttribPointer(cast(u32) index, attribute.size, GL_FLOAT, GL_FALSE, strideLength * size_of(float), cast(*void) (currentStart * size_of(float)));
+        glEnableVertexAttribArray(xx index);
+        glVertexAttribPointer(xx index, attribute.size, GL_FLOAT, GL_FALSE, strideLength * size_of(float), cast(*void) (currentStart * size_of(float)));
         currentStart += attribute.size;
     }
 

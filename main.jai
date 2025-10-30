@@ -70,9 +70,8 @@ main :: () {
     gl_load(*gl, SDL_GL_GetProcAddress);
     // we should check that it was initialized correctly.... but i dont know how
 
-    VAO, VBO := VertexObjectsCreate(vertices, GL_STATIC_DRAW, vertexAttributes);
-
-    shader := ShaderCreate(VERTEX_SHADER, FRAGMENT_SHADER);
+    VAO, VBO := CreateVertexObjects(vertices, vertexAttributes);
+    shader := CreateShader(VERTEX_SHADER, FRAGMENT_SHADER);
 
     // main loop
     exit := false;
