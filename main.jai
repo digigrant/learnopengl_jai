@@ -1,31 +1,42 @@
 #import "Basic";
 #import "SDL";
 #import "GL";
+#import "Graphics";
 
 SCREEN_WIDTH    :: 800;
 SCREEN_HEIGHT   :: 600;
 
-vertices : [9] float : .[
-    -0.5, -0.5,  0.0,
-     0.5, -0.5,  0.0,
-     0.0,  0.5,  0.0,
+vertices : [18] float : .[
+     0.5, -0.5,  0.0,   1.0, 0.0, 0.0,
+    -0.5, -0.5,  0.0,   0.0, 1.0, 0.0,
+     0.0,  0.5,  0.0,   0.0, 0.0, 1.0,
+];
+
+vertexAttributes : [2] VertexAttribute : .[
+    .{3},   // position
+    .{3},   // color
 ];
 
 VERTEX_SHADER :: #string DONE
 #version 330 core
 layout (location = 0) in vec3 aPos;
+layout (location = 1) in vec3 aColor;
+
+out vec3 myColor;
 
 void main() {
     gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
+    myColor = aColor;
 }
 DONE
 
 FRAGMENT_SHADER :: #string DONE
 #version 330 core
+in vec3 myColor;
 out vec4 FragColor;
 
 void main() {
-    FragColor = vec4(1.0, 0.5, 0.2, 1.0);
+    FragColor = vec4(myColor, 1.0);
 }
 DONE
 
@@ -59,52 +70,9 @@ main :: () {
     gl_load(*gl, SDL_GL_GetProcAddress);
     // we should check that it was initialized correctly.... but i dont know how
 
-    VAO, VBO : u32;
-    glGenVertexArrays(1, *VAO);
-    glGenBuffers(1, *VBO);
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, 36, *vertices, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * size_of(float), cast(*void)0);
-    glBindVertexArray(0);
+    VAO, VBO := VertexObjectsCreate(vertices, GL_STATIC_DRAW, vertexAttributes);
 
-    // make the shader
-    vertexShader, fragmentShader, shader : u32;
-    success : s32;
-    infoLog : string;
-
-    vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, *(to_c_string(VERTEX_SHADER)), null);
-    glCompileShader(vertexShader);
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, *success);
-    if !success {
-        glGetShaderInfoLog(vertexShader, 512, null, to_c_string(infoLog));
-        print("ERROR::SHADER::VERTEX::COMPILATION_FAILED\n%\n", infoLog);
-    }
-
-    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, *(to_c_string(FRAGMENT_SHADER)), null);
-    glCompileShader(fragmentShader);
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, *success);
-    if !success {
-        glGetShaderInfoLog(fragmentShader, 512, null, to_c_string(infoLog));
-        print("ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n%\n", infoLog);
-    }
-
-    shader = glCreateProgram();
-    glAttachShader(shader, vertexShader);
-    glAttachShader(shader, fragmentShader);
-    glLinkProgram(shader);
-    glGetProgramiv(shader, GL_LINK_STATUS, *success);
-    if !success {
-        glGetProgramInfoLog(shader, 512, null, to_c_string(infoLog));
-        print("ERROR::SHADER::PROGRAM::LINKING_FAILED\n%\n", infoLog);
-    }
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
-
-
+    shader := ShaderCreate(VERTEX_SHADER, FRAGMENT_SHADER);
 
     // main loop
     exit := false;
