@@ -13,18 +13,3 @@ RotateMatrix4 :: (m : *Matrix4, angle : float, axis : Vector3) {
     new_m : Matrix4 = rotate(m, q);     // rotates out of place, ew
     memcpy(m, *new_m, size_of(Matrix4));
 }
-
-MakeFrustumMatrix :: (fovYRad : float, aspectRatio : float, front : float, back : float) -> Matrix4 {
-    tangent := tan(fovYRad/2.0);
-    top := front * tangent;
-    right := top * aspectRatio;
-
-    matrix : Matrix4;
-    matrix.floats[0]   = front / right;
-    matrix.floats[5]   = front / top;
-    matrix.floats[10]  = -(back + front) / (back - front);
-    matrix.floats[11]  = -(2 * back * front) / (back - front);
-    matrix.floats[14]  = -1;
-    //matrix.floats[15]  = 0;
-    return matrix;
-}
