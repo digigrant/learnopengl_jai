@@ -6,37 +6,51 @@
 SCREEN_WIDTH    :: 800;
 SCREEN_HEIGHT   :: 600;
 
-vertices : [18] float : .[
-     0.5, -0.5,  0.0,   1.0, 0.0, 0.0,
-    -0.5, -0.5,  0.0,   0.0, 1.0, 0.0,
-     0.0,  0.5,  0.0,   0.0, 0.0, 1.0,
+vertices : [32] float : .[
+     0.5,  0.5, 0.0,   1.0, 0.0, 0.0,   1.0, 1.0,   // top right
+     0.5, -0.5, 0.0,   0.0, 1.0, 0.0,   1.0, 0.0,   // bottom right
+    -0.5, -0.5, 0.0,   0.0, 0.0, 1.0,   0.0, 0.0,   // bottom left
+    -0.5,  0.5, 0.0,   1.0, 1.0, 0.0,   0.0, 1.0    // top left 
 ];
 
-vertexAttributes : [2] VertexAttribute : .[
+indices : [6] u32 : .[
+    0, 1, 3, // first triangle
+    1, 2, 3  // second triangle
+];
+
+vertexAttributes : [3] VertexAttribute : .[
     .{3},   // position
     .{3},   // color
+    .{2},   // texcoords
 ];
 
 VERTEX_SHADER :: #string DONE
 #version 330 core
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec3 aColor;
+layout (location = 2) in vec2 aTexCoord;
 
 out vec3 myColor;
+out vec2 TexCoord;
 
 void main() {
-    gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
+    gl_Position = vec4(aPos, 1.0);
     myColor = aColor;
+    TexCoord = aTexCoord;
 }
 DONE
 
 FRAGMENT_SHADER :: #string DONE
 #version 330 core
 in vec3 myColor;
+in vec2 TexCoord;
+
 out vec4 FragColor;
 
+uniform sampler2D diffuse;
+
 void main() {
-    FragColor = vec4(myColor, 1.0);
+    FragColor = texture(diffuse, TexCoord);
 }
 DONE
 
@@ -71,12 +85,19 @@ main :: () {
     // we should check that it was initialized correctly.... but i dont know how
 
     VAO, VBO := CreateVertexObjects(vertices, vertexAttributes);
+    EBO : u32;
+    glGenBuffers(1, *EBO);
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.count * size_of(int), indices.data, GL_STATIC_DRAW);
+    glBindVertexArray(0);
     shader := CreateShader(VERTEX_SHADER, FRAGMENT_SHADER);
+
+    texture := CreateTexture("textures/container.jpg", .TEXTURE_TYPE_DIFFUSE);
 
     // main loop
     exit := false;
     while !exit {
-
         // poll events
         event : SDL_Event;
         while SDL_PollEvent(*event) {
@@ -99,8 +120,9 @@ main :: () {
 
         // ...rendering happens here...
         glUseProgram(shader);
+        glBindTexture(GL_TEXTURE_2D, texture.id);
         glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, null);
 
         // swap buffers
         SDL_GL_SwapWindow(window);
@@ -108,5 +130,7 @@ main :: () {
 
     SDL_DestroyWindow(window);
     SDL_Quit();
+    
+    FreeTexture(*texture);
 }
 
