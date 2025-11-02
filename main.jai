@@ -2,6 +2,8 @@
 #import "SDL";
 #import "GL";
 #import "Graphics";
+#import "Math";
+#import "Extra_Math";
 
 SCREEN_WIDTH    :: 800;
 SCREEN_HEIGHT   :: 600;
@@ -30,11 +32,16 @@ layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec3 aColor;
 layout (location = 2) in vec2 aTexCoord;
 
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+
 out vec3 myColor;
 out vec2 TexCoord;
 
 void main() {
-    gl_Position = vec4(aPos, 1.0);
+    gl_Position = projection * view * model * vec4(aPos, 1.0f);
+    //gl_Position = vec4(aPos, 1.0);
     myColor = aColor;
     TexCoord = aTexCoord;
 }
@@ -86,7 +93,7 @@ main :: () {
 
     VAO, VBO := CreateVertexObjects(vertices, vertexAttributes);
     EBO := CreateEBO(indices, VAO);
-    
+
     shader := CreateShader(VERTEX_SHADER, FRAGMENT_SHADER);
 
     texture := CreateTexture("textures/container.jpg", .TEXTURE_TYPE_DIFFUSE);
@@ -115,7 +122,19 @@ main :: () {
         glClear(GL_COLOR_BUFFER_BIT);
 
         // ...rendering happens here...
+
         glUseProgram(shader);
+        model := Matrix4_Identity;
+        RotateMatrix4(*model, #run DegToRad(-55.0), .{1.0, 0.0, 0.0});
+        ShaderSetMat4(shader, "model", *model);
+
+        view := Matrix4_Identity;
+        translate(*view, .{0.0, 0.0, -3.0});
+        ShaderSetMat4(shader, "view", *view);
+
+        projection := MakeFrustumMatrix(#run DegToRad(45.0), width.(float)/height, 0.1, 100.0);
+        ShaderSetMat4(shader, "projection", *projection);
+
         glBindTexture(GL_TEXTURE_2D, texture.id);
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, null);

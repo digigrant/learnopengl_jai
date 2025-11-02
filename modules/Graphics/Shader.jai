@@ -1,5 +1,6 @@
 #import "Basic";
 #import "GL";
+#import "Math";
 
 MAX_INFO_LOG_LENGTH :: 512;
 
@@ -47,4 +48,12 @@ CreateShader :: (vertexShaderCode : string, fragmentShaderCode : string) -> shad
     // In the old system we allocated a Shader object and returned the pointer to
     // that, but it only had the ID in it, so I dont see a huge reason to do that.
     return shader;
+}
+
+ShaderSetFloat :: (shaderId : u32, name : string, value : float) {
+    glUniform1f(glGetUniformLocation(shaderId, to_c_string(name)), value);
+}
+
+ShaderSetMat4 :: (shaderId : u32, name : string, mat4 : *Matrix4) {
+    glUniformMatrix4fv(glGetUniformLocation(shaderId, to_c_string(name)), 1, GL_TRUE, mat4.floats.data);
 }
