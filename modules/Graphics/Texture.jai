@@ -2,16 +2,16 @@
 #import "GL";
 #import "stb_image";
 
-TextureType :: enum {
-    NONE :: 0;
-    TEXTURE_TYPE_DIFFUSE;
-    TEXTURE_TYPE_SPECULAR;
-};
-
 Texture :: struct {
     path : string;
     id : u32;
     type : TextureType;
+};
+
+TextureType :: enum {
+    NONE :: 0;
+    TEXTURE_TYPE_DIFFUSE;
+    TEXTURE_TYPE_SPECULAR;
 };
 
 CreateTexture :: (texture_path : string, texture_type : TextureType) -> texture : *Texture {

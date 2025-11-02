@@ -85,12 +85,8 @@ main :: () {
     // we should check that it was initialized correctly.... but i dont know how
 
     VAO, VBO := CreateVertexObjects(vertices, vertexAttributes);
-    EBO : u32;
-    glGenBuffers(1, *EBO);
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.count * size_of(int), indices.data, GL_STATIC_DRAW);
-    glBindVertexArray(0);
+    EBO := CreateEBO(indices, VAO);
+    
     shader := CreateShader(VERTEX_SHADER, FRAGMENT_SHADER);
 
     texture := CreateTexture("textures/container.jpg", .TEXTURE_TYPE_DIFFUSE);
@@ -130,7 +126,7 @@ main :: () {
 
     SDL_DestroyWindow(window);
     SDL_Quit();
-    
+
     FreeTexture(*texture);
 }
 

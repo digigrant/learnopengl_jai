@@ -32,3 +32,14 @@ CreateVertexObjects :: (vertices : [] float, attributes : [] VertexAttribute) ->
     glBindVertexArray(0);
     return VAO, VBO;
 }
+
+CreateEBO :: (elements : [] u32, VAO : u32) -> EBO : u32 {
+    EBO : u32;
+    glGenBuffers(1, *EBO);
+
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, elements.count * size_of(u32), elements.data, GL_STATIC_DRAW);
+    glBindVertexArray(0);
+    return EBO;
+}
