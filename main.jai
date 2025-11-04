@@ -1,12 +1,8 @@
 #import "Basic";
-#import "SDL";
-#import "GL";
+#import "GL"; // we only need this for any GL features we enable in main - just temporary
 #import "Graphics";
 #import "Math";
 #import "Extra_Math";
-
-SCREEN_WIDTH    :: 800;
-SCREEN_HEIGHT   :: 600;
 
 vertices : [180] float : .[
     -0.5, -0.5, -0.5,  0.0, 0.0,
@@ -99,35 +95,14 @@ void main() {
 DONE
 
 main :: () {
-    SDL_Init(SDL_INIT_VIDEO);
-
-    // set GL attributes
-    // documentation says this should be done before window creation
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, xx SDL_GL_CONTEXT_PROFILE_CORE);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3); // OpenGL 3.3
-
-    // create window
-    width, height : u32 = SCREEN_WIDTH, SCREEN_HEIGHT;
-    window := SDL_CreateWindow("LearnOpenGL_Jai", SDL_WINDOWPOS_UNDEFINED,
-        SDL_WINDOWPOS_UNDEFINED, xx width, xx height,
-        SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE); // can add resizing, input focus, etc
-    if window == null {
-        print("Could not create window: %\n", to_string(SDL_GetError()));
+    if !Init() {
+        print("Something bad happened. Let's hit the bricks\n");
+        Shutdown();
         return;
     }
 
-    // create context
-    gl_context := SDL_GL_CreateContext(window);
-    if !gl_context {
-        print("Could not create OpenGL context: %\n", to_string(SDL_GetError()));
-        return;
-    }
-
-    // initialize GLAD
-    gl_load(*gl, SDL_GL_GetProcAddress);
-    // we should check that it was initialized correctly.... but i dont know how
-
+    // enable gl systems
+    // we just do this here because the tutorials have me change this a lot
     glEnable(GL_DEPTH_TEST);
 
     VAO, VBO := CreateVertexObjects(vertices, vertexAttributes);
@@ -137,9 +112,7 @@ main :: () {
 
     texture := CreateTexture("textures/container.jpg", .TEXTURE_TYPE_DIFFUSE);
 
-    camera := CreateCamera(.{0.0, 1.0, 0.0});
-    print("pitch: %\n", camera.pitch);
-    print("yaw: %\n", camera.yaw);
+    camera := CreateCamera(.{0.0, 0.0, 3.0});
 
     // timekeeping
     currTimeSeconds, prevTimeSeconds, deltaTimeSeconds : float;
@@ -148,10 +121,10 @@ main :: () {
     exit := false;
     while !exit {
         prevTimeSeconds = currTimeSeconds;
-        currTimeSeconds = SDL_GetTicks()/1000.0;
+        currTimeSeconds = GetTimeMilliseconds()/1000.0;
         deltaTimeSeconds = currTimeSeconds - prevTimeSeconds;
 
-        ProcessInput(*exit, *width, *height, deltaTimeSeconds, camera);
+        ProcessInput(*exit, deltaTimeSeconds, camera);
 
         // clear buffers
         glClearColor(0.2, 0.3, 0.3, 1.0);
@@ -167,76 +140,17 @@ main :: () {
         view := CameraGetViewMatrix(camera);
         ShaderSetMat4(shader, "view", *view);
 
-        projection := make_projection_matrix(#run DegToRad(45.0), width.(float)/height, 0.1, 100.0);
+        projection := make_projection_matrix(DegToRad(camera.fov), GetWindowWidth().(float)/GetWindowHeight(), 0.1, 100.0);
         ShaderSetMat4(shader, "projection", *projection);
 
         glBindTexture(GL_TEXTURE_2D, texture.id);
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 36);
 
-        // swap buffers
-        SDL_GL_SwapWindow(window);
+        SwapBuffers();
     }
-
-    SDL_DestroyWindow(window);
-    SDL_Quit();
 
     FreeTexture(*texture);
-}
-
-ProcessInput :: (exit : *bool, width : *u32, height : *u32, deltaTimeSeconds : float, camera : *Camera) {
-    // poll events
-    event : SDL_Event;
-    movementKeyPressed := false;
-    zoomKeyPressed := false;
-    translation : Vector3;
-    zoom : float;
-
-    while SDL_PollEvent(*event) {
-        if event.type == {
-            case SDL_QUIT; (exit.*) = true;
-            case SDL_KEYUP;
-                if event.key.keysym.sym == SDLK_ESCAPE { (exit.*) = true; }
-            
-            case SDL_WINDOWEVENT;
-                if event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED {
-                    (width.*), (height.*) = xx event.window.data1, xx event.window.data2;
-                    // should only need to call this when window is resized
-                    glViewport(0, 0, (width.*), (height.*));
-                }
-            
-            case SDL_KEYDOWN;
-                if event.key.keysym.sym == {
-                    case SDLK_w; ApplyMovement(*translation, .{z=1.0}, *movementKeyPressed);
-                    case SDLK_s; ApplyMovement(*translation, .{z=-1.0}, *movementKeyPressed);
-                    case SDLK_a; ApplyMovement(*translation, .{x=-1.0}, *movementKeyPressed);
-                    case SDLK_d; ApplyMovement(*translation, .{x=1.0}, *movementKeyPressed);
-                    case SDLK_e; ApplyMovement(*translation, .{y=1.0}, *movementKeyPressed);
-                    case SDLK_q; ApplyMovement(*translation, .{y=-1.0}, *movementKeyPressed);
-                    case SDLK_r; ApplyZoom(*zoom,  1.0, *zoomKeyPressed);
-                    case SDLK_f; ApplyZoom(*zoom, -1.0, *zoomKeyPressed);
-                }
-            
-        }
-    }
-
-    if movementKeyPressed {
-        cameraSpeed := 2.5 * deltaTimeSeconds;
-        CameraTranslate(camera, multiply(translation, cameraSpeed));
-    }
-
-    if zoomKeyPressed {
-        zoomSpeed := 15.0 * deltaTimeSeconds;
-        CameraZoom(camera, zoom * zoomSpeed);
-    }
-}
-
-ApplyMovement :: (translation : *Vector3, delta : Vector3, movementKeyPressed : *bool) {
-    (translation.*) += delta;
-    (movementKeyPressed.*) = true;
-}
-
-ApplyZoom :: (zoom : *float, delta : float, zoomKeyPressed : *bool) {
-    (zoom.*) += delta;
-    (zoomKeyPressed.*) = true;
+    
+    Shutdown();
 }

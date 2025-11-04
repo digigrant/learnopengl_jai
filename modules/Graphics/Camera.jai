@@ -21,7 +21,7 @@ PITCH_MAX :: #run DegToRad(89.0);
 FOV_MIN :: 1.0;
 FOV_MAX :: 45.0;
 
-CreateCamera :: (worldUp : Vector3, initialPosition : Vector3 = .{0.0, 0.0, 0.0}, initialRotationDeg : Vector3 = .{ 0.0, -90.0, 0.0}) -> camera : *Camera {
+CreateCamera :: (initialPosition : Vector3 = .{0.0, 0.0, 0.0}, initialRotationDeg : Vector3 = .{0.0, -90.0, 0.0}, worldUp : Vector3 = .{0.0, 1.0, 0.0}) -> camera : *Camera {
     camera := New(Camera);
     if camera == null return null;
 
@@ -59,11 +59,12 @@ CameraRotate :: (using camera : *Camera, rotationDeg : Vector2) {
         0.0
     };
     Clamp(*pitch, -PITCH_MAX, PITCH_MAX);
-    UpdateVectors();
+    UpdateVectors(camera);
 }
 
+// TODO: roll your own. Close to something very good
 CameraGetViewMatrix :: (using camera : *Camera) -> view : Matrix4 {
-    return make_look_at_matrix(position, position + front, worldUp);
+    return make_look_at_matrix(position, position + front, up, false);
 }
 
 CameraZoom :: (using camera : *Camera, deltaFov : float) {
@@ -85,5 +86,11 @@ UpdateVectors :: (using camera : *Camera) {
     right = normalize(cross(worldUp, -front));
 
     // finally calculate actual up vector
-    up = normalize(cross(front, right));
+    up = normalize(cross(-front, right));
+
+    /*
+    print("right: %\n", right);
+    print("up: %\n", up);
+    print("front: %\n", front);
+    */
 }
