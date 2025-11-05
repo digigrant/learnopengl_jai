@@ -4,7 +4,7 @@
 #import "Math";
 #import "Extra_Math";
 
-vertices : [180] float : .[
+vertexFloats : [180] float : .[
     -0.5, -0.5, -0.5,  0.0, 0.0,
      0.5, -0.5, -0.5,  1.0, 0.0,
      0.5,  0.5, -0.5,  1.0, 1.0,
@@ -105,14 +105,19 @@ main :: () {
     // we just do this here because the tutorials have me change this a lot
     glEnable(GL_DEPTH_TEST);
 
-    VAO, VBO := CreateVertexObjects(vertices, vertexAttributes);
+    VAO, VBO := CreateVertexObjects(.{vertexFloats, vertexAttributes});
     // EBO := CreateEBO(indices, VAO);
 
     shader := CreateShader(VERTEX_SHADER, FRAGMENT_SHADER);
+    // shader isnt actually allocated or else we would have to free it
 
     texture := CreateTexture("textures/container.jpg", .TEXTURE_TYPE_DIFFUSE);
+    defer FreeTexture(*texture);
 
     camera := CreateCamera(.{0.0, 0.0, 3.0});
+    defer FreeCamera(*camera);
+
+    mesh := CreateMesh(.{ vertexFloats, vertexAttributes });
 
     // timekeeping
     currTimeSeconds, prevTimeSeconds, deltaTimeSeconds : float;
@@ -149,8 +154,6 @@ main :: () {
 
         SwapBuffers();
     }
-
-    FreeTexture(*texture);
     
     Shutdown();
 }

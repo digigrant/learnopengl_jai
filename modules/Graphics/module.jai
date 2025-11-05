@@ -1,4 +1,5 @@
 #load "Camera.jai";
+#load "Mesh.jai";
 #load "Shader.jai";
 #load "Texture.jai";
 #load "VertexObjects.jai";
@@ -66,6 +67,7 @@ Shutdown :: () {
 
 // TODO: there's a lot of crap in this file that maybe shouldn't be here
 // "Game Engine Architecture" might shed some light on what should live here
+// (It didnt)
 
 ProcessInput :: (exit : *bool, deltaTimeSeconds : float, camera : *Camera) {
     // poll events
