@@ -11,14 +11,21 @@
 DEFAULT_WINDOW_WIDTH    :: 800;
 DEFAULT_WINDOW_HEIGHT   :: 600;
 
+JOYSTICK_DEADZONE       :: 3200 / S16_MAX.(float);
+TRIGGER_DEADZONE        :: 0.01;
+
 // global variables
 window : *SDL_Window;
 windowWidth : u32 = DEFAULT_WINDOW_WIDTH;
 windowHeight : u32 = DEFAULT_WINDOW_HEIGHT;
 keyboardState : *u8;
+joysticks : [..] *SDL_Joystick;
 
 Init :: () -> ok : bool {
-    SDL_Init(SDL_INIT_VIDEO);
+    if SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) {
+        print("Couldn't initialize SDL: %\n", to_string(SDL_GetError()));
+        return false;
+    }
 
     // set GL attributes
     // documentation says this should be done before window creation
@@ -57,6 +64,10 @@ Init :: () -> ok : bool {
     SDL_ShowCursor(0); // there's no SDL_DISABLE enum?????? 
     SDL_SetRelativeMouseMode(SDL_TRUE);
 
+    
+    // gamepads
+    SDL_JoystickEventState(1);
+
     return true;
 }
 
@@ -73,6 +84,7 @@ ProcessInput :: (exit : *bool, deltaTimeSeconds : float, camera : *Camera) {
     // poll events
     event : SDL_Event;
     while SDL_PollEvent(*event) {
+        //print("RECEIVED EVENT: %\n", event.type);
         if event.type == {
             case SDL_QUIT; (exit.*) = true;
             case SDL_KEYUP;
@@ -84,6 +96,9 @@ ProcessInput :: (exit : *bool, deltaTimeSeconds : float, camera : *Camera) {
                     // should only need to call this when window is resized
                     glViewport(0, 0, windowWidth, windowHeight);
                 }
+            case SDL_JOYDEVICEADDED; #through;
+            case SDL_JOYDEVICEREMOVED;
+                RefreshJoysticks();
             
             case SDL_MOUSEMOTION;
                 xoffset := event.motion.xrel * 0.1;
@@ -107,6 +122,38 @@ ProcessInput :: (exit : *bool, deltaTimeSeconds : float, camera : *Camera) {
     if keyboardState[SDL_Scancode.SDL_SCANCODE_Q] ApplyMovement(*translation, .{y=-1.0}, *movementKeyPressed);
     if keyboardState[SDL_Scancode.SDL_SCANCODE_R] ApplyZoom(*zoom,  1.0, *zoomKeyPressed);
     if keyboardState[SDL_Scancode.SDL_SCANCODE_F] ApplyZoom(*zoom, -1.0, *zoomKeyPressed);
+
+    // Gamepad input
+    if joysticks.count > 0 {
+        start_button := SDL_JoystickGetButton(joysticks[0], 7);
+        if start_button then (exit.*) = true;
+
+        left_thumbstick := GetJoystickThumbstickNormalized(joysticks[0], 0, 1);
+        right_thumbstick := GetJoystickThumbstickNormalized(joysticks[0], 3, 4);
+
+        if length(left_thumbstick) > JOYSTICK_DEADZONE {
+            ApplyMovement(*translation, .{x=left_thumbstick.x}, *movementKeyPressed);
+            ApplyMovement(*translation, .{z=left_thumbstick.y}, *movementKeyPressed);
+        }
+
+        if length(right_thumbstick) > JOYSTICK_DEADZONE {
+            SENSITIVITY :: 3.0;
+            CameraRotate(camera, .{right_thumbstick.y, right_thumbstick.x} * SENSITIVITY);
+        }
+
+        //for 0..SDL_JoystickNumButtons(joysticks[0])-1 print("% ", SDL_JoystickGetButton(joysticks[0], it));
+        //print("\n");
+
+        left_shoulder := SDL_JoystickGetButton(joysticks[0], 4);
+        right_shoulder := SDL_JoystickGetButton(joysticks[0], 5);
+        if left_shoulder ApplyMovement(*translation, .{y=-1.0}, *movementKeyPressed);
+        if right_shoulder ApplyMovement(*translation, .{y=1.0}, *movementKeyPressed);
+
+        triggers := GetJoystickTriggersNormalized(joysticks[0]);
+        ZOOM_MULTIPLIER :: 2.0;
+        if triggers.x > TRIGGER_DEADZONE ApplyZoom(*zoom, -triggers.x * ZOOM_MULTIPLIER, *zoomKeyPressed);
+        if triggers.y > TRIGGER_DEADZONE ApplyZoom(*zoom, triggers.y * ZOOM_MULTIPLIER, *zoomKeyPressed);
+    }
 
     if movementKeyPressed {
         cameraSpeed := 2.5 * deltaTimeSeconds;
@@ -139,3 +186,39 @@ ApplyZoom :: (zoom : *float, delta : float, zoomKeyPressed : *bool) {
 
 GetWindowWidth  :: () -> windowWidth : u32  { return windowWidth; }
 GetWindowHeight :: () -> windowHeight : u32 { return windowHeight; }
+
+RefreshJoysticks :: () {
+    for joysticks SDL_JoystickClose(it);
+    array_reset(*joysticks);
+
+    if SDL_NumJoysticks() > 0 {
+        print("Found joysticks:\n");
+        for 0..SDL_NumJoysticks()-1 {
+            array_add(*joysticks, SDL_JoystickOpen(it));
+            print("\tJoystick %: %\n", it, to_string(SDL_JoystickNameForIndex(it).(*u8)));
+        }
+    } else {
+        print("No joysticks found\n");
+    }
+}
+
+GetJoystickThumbstickNormalized :: (joystick : *SDL_Joystick, x_axis : s32, y_axis : s32, invert_y : bool = true) -> Vector2 {
+    thumbstick_x := SDL_JoystickGetAxis(joystick, x_axis);
+    thumbstick_y := ifx invert_y then ~SDL_JoystickGetAxis(joystick, y_axis) else SDL_JoystickGetAxis(joystick, y_axis);
+    thumbstick_normalized : Vector2 = .{
+        ifx thumbstick_x > -1 then thumbstick_x / S16_MAX.(float) else thumbstick_x / -(S16_MIN.(float)),
+        ifx thumbstick_y > -1 then thumbstick_y / S16_MAX.(float) else thumbstick_y / -(S16_MIN.(float))
+    };
+
+    return thumbstick_normalized;
+}
+
+GetJoystickTriggersNormalized :: (joystick : *SDL_Joystick) -> Vector2 {
+    left_trigger : s32 = SDL_JoystickGetAxis(joystick, 2);
+    right_trigger : s32 = SDL_JoystickGetAxis(joystick, 5);
+    triggers_normalized : Vector2 = .{
+        (left_trigger - S16_MIN.(s32)) / U16_MAX.(float),
+        (right_trigger - S16_MIN.(s32)) / U16_MAX.(float)
+    };
+    return triggers_normalized;
+}
