@@ -50,6 +50,10 @@ CreateShader :: (vertexShaderCode : string, fragmentShaderCode : string) -> shad
     return shader;
 }
 
+ShaderSetInt :: (shaderId : u32, name : string, value : s32) {
+    glUniform1i(glGetUniformLocation(shaderId, to_c_string(name)), value);
+}
+
 ShaderSetFloat :: (shaderId : u32, name : string, value : float) {
     glUniform1f(glGetUniformLocation(shaderId, to_c_string(name)), value);
 }

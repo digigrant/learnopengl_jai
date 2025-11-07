@@ -10,8 +10,8 @@ Texture :: struct {
 
 TextureType :: enum {
     NONE :: 0;
-    TEXTURE_TYPE_DIFFUSE;
-    TEXTURE_TYPE_SPECULAR;
+    DIFFUSE;
+    SPECULAR;
 };
 
 CreateTexture :: (texture_path : string, texture_type : TextureType) -> texture : *Texture {

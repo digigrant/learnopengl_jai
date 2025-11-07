@@ -105,19 +105,17 @@ main :: () {
     // we just do this here because the tutorials have me change this a lot
     glEnable(GL_DEPTH_TEST);
 
-    VAO, VBO := CreateVertexObjects(.{vertexFloats, vertexAttributes});
-    // EBO := CreateEBO(indices, VAO);
-
     shader := CreateShader(VERTEX_SHADER, FRAGMENT_SHADER);
     // shader isnt actually allocated or else we would have to free it
 
-    texture := CreateTexture("textures/container.jpg", .TEXTURE_TYPE_DIFFUSE);
+    texture := CreateTexture("textures/container.jpg", .DIFFUSE);
     defer FreeTexture(*texture);
+
+    mesh := CreateMesh(.{ vertexFloats, vertexAttributes }, textures = .[texture]);
+    defer FreeMesh(*mesh);
 
     camera := CreateCamera(.{0.0, 0.0, 3.0});
     defer FreeCamera(*camera);
-
-    mesh := CreateMesh(.{ vertexFloats, vertexAttributes });
 
     // timekeeping
     currTimeSeconds, prevTimeSeconds, deltaTimeSeconds : float;
@@ -148,9 +146,7 @@ main :: () {
         projection := make_projection_matrix(DegToRad(camera.fov), GetWindowWidth().(float)/GetWindowHeight(), 0.1, 100.0);
         ShaderSetMat4(shader, "projection", *projection);
 
-        glBindTexture(GL_TEXTURE_2D, texture.id);
-        glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        DrawMesh(mesh, shader);
 
         SwapBuffers();
     }
