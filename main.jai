@@ -3,6 +3,7 @@
 #import "Graphics";
 #import "Math";
 #import "Extra_Math";
+#import "Asset_Importer";
 
 vertexFloats : [180] float : .[
     -0.5, -0.5, -0.5,  0.0, 0.0,
@@ -116,6 +117,8 @@ main :: () {
 
     camera := CreateCamera(.{0.0, 0.0, 3.0});
     defer FreeCamera(*camera);
+
+    ImportAsset("/home/grant/Documents/learnopengl_jai/models/backpack/backpack.obj");
 
     // timekeeping
     currTimeSeconds, prevTimeSeconds, deltaTimeSeconds : float;
