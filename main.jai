@@ -112,13 +112,22 @@ main :: () {
     texture := CreateTexture("textures/container.jpg", .DIFFUSE);
     defer FreeTexture(*texture);
 
-    mesh := CreateMesh(.{ vertexFloats, vertexAttributes }, textures = .[texture]);
-    defer FreeMesh(*mesh);
+    //mesh := CreateMesh(.{ vertexFloats, vertexAttributes }, textures = .[texture]);
+    //defer FreeMesh(*mesh);
 
     camera := CreateCamera(.{0.0, 0.0, 3.0});
     defer FreeCamera(*camera);
 
-    ImportAsset("/home/grant/Documents/learnopengl_jai/models/backpack/backpack.obj");
+    ok, data := ImportDataFromObj("/home/grant/Documents/learnopengl_jai/models/backpack/backpack.obj");
+    if !ok {
+        print("We didnt do it kid\n");
+        return;
+    }
+
+    meshes : [..] *Mesh;
+    for object : data.objects {
+        array_add(*meshes, MeshCreate())
+    }
 
     // timekeeping
     currTimeSeconds, prevTimeSeconds, deltaTimeSeconds : float;
