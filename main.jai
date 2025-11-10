@@ -126,7 +126,7 @@ main :: () {
 
     meshes : [..] *Mesh;
     for object : data.objects {
-        array_add(*meshes, MeshCreate())
+        array_add(*meshes, CreateMesh(object.vertexData));
     }
 
     // timekeeping
@@ -158,9 +158,13 @@ main :: () {
         projection := make_projection_matrix(DegToRad(camera.fov), GetWindowWidth().(float)/GetWindowHeight(), 0.1, 100.0);
         ShaderSetMat4(shader, "projection", *projection);
 
-        DrawMesh(mesh, shader);
+        for mesh : meshes DrawMesh(mesh, shader);
 
         SwapBuffers();
+    }
+
+    for meshes {
+        FreeMesh(*it);
     }
     
     Shutdown();
