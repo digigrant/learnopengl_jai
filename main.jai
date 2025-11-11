@@ -112,22 +112,11 @@ main :: () {
     texture := CreateTexture("textures/container.jpg", .DIFFUSE);
     defer FreeTexture(*texture);
 
-    //mesh := CreateMesh(.{ vertexFloats, vertexAttributes }, textures = .[texture]);
-    //defer FreeMesh(*mesh);
-
     camera := CreateCamera(.{0.0, 0.0, 3.0});
     defer FreeCamera(*camera);
 
-    ok, data := ImportDataFromObj("/home/grant/Documents/learnopengl_jai/models/backpack/backpack.obj");
-    if !ok {
-        print("We didnt do it kid\n");
-        return;
-    }
-
-    meshes : [..] *Mesh;
-    for object : data.objects {
-        array_add(*meshes, CreateMesh(object.vertexData));
-    }
+    backpack := CreateModel("models/backpack/backpack.obj");
+    defer FreeModel(*backpack);
 
     // timekeeping
     currTimeSeconds, prevTimeSeconds, deltaTimeSeconds : float;
@@ -158,13 +147,9 @@ main :: () {
         projection := make_projection_matrix(DegToRad(camera.fov), GetWindowWidth().(float)/GetWindowHeight(), 0.1, 100.0);
         ShaderSetMat4(shader, "projection", *projection);
 
-        for mesh : meshes DrawMesh(mesh, shader);
+        DrawModel(backpack, shader);
 
         SwapBuffers();
-    }
-
-    for meshes {
-        FreeMesh(*it);
     }
     
     Shutdown();

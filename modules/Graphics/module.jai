@@ -1,5 +1,6 @@
 #load "Camera.jai";
 #load "Mesh.jai";
+#load "Model.jai";
 #load "Shader.jai";
 #load "Texture.jai";
 #load "VertexObjects.jai";

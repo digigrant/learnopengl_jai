@@ -12,6 +12,7 @@ Mesh :: struct {
     textures : [] Texture;
     VAO, VBO, EBO : u32;
     drawType : DrawType;
+    //material : *Material;
 };
 
 // create a mesh. indices and textures are optional
