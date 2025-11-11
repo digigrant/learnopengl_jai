@@ -12,9 +12,9 @@ MtlData :: struct {
 
     illumination_model : IlluminationModel;
 
-    diffuse_texture_name : string;
-    normal_texture_name : string;
-    specular_texture_name : string;
+    diffuse_texture_path : string;
+    normal_texture_path : string;
+    specular_texture_path : string;
 
     // PBR
     emissive_color : Vector3;
@@ -45,6 +45,7 @@ ImportDataFromMtl :: (path : string) -> ok : bool, data : [] *MtlData {
 
     data : [..] *MtlData;
     current_material : *MtlData;
+    directory : string = slice(path, 0, find_index_from_right(path, "/") + 1);
 
     cursor := 0;
     words : [] string;
@@ -115,15 +116,15 @@ ImportDataFromMtl :: (path : string) -> ok : bool, data : [] *MtlData {
             }
             case "map_Kd"; {
                 assert(words.count == 2);
-                current_material.diffuse_texture_name = words[1];
+                current_material.diffuse_texture_path = join(directory, words[1]);
             }
             case "map_Ks"; {
                 assert(words.count == 2);
-                current_material.specular_texture_name = words[1];
+                current_material.specular_texture_path = join(directory, words[1]);
             }
             case "map_Bump"; {
                 assert(words.count == 2);
-                current_material.normal_texture_name = words[1];
+                current_material.normal_texture_path = join(directory, words[1]);
             }
         }
     }
