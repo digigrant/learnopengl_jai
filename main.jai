@@ -102,6 +102,9 @@ main :: () {
         return;
     }
 
+    InitTextureLibrary();
+    defer FreeEntireTextureLibrary();
+
     // enable gl systems
     // we just do this here because the tutorials have me change this a lot
     glEnable(GL_DEPTH_TEST);
@@ -109,14 +112,14 @@ main :: () {
     shader := CreateShader(VERTEX_SHADER, FRAGMENT_SHADER);
     // shader isnt actually allocated or else we would have to free it
 
-    texture := CreateTexture("textures/container.jpg", .DIFFUSE);
-    defer FreeTexture(*texture);
+    texture := BuildFromTextureLibrary("textures/container.jpg", .DIFFUSE);
 
     camera := CreateCamera(.{0.0, 0.0, 3.0});
     defer FreeCamera(*camera);
 
     backpack := CreateModel("models/backpack/backpack.obj");
     defer FreeModel(*backpack);
+    // for mesh : backpack.meshes print("%: %\n", mesh.name, mesh.material.diffuse_texture.path);
 
     // timekeeping
     currTimeSeconds, prevTimeSeconds, deltaTimeSeconds : float;

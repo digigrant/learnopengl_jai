@@ -38,7 +38,7 @@ CreateModel :: (path : string) -> model : *Model {
         for mtl : materials if object.material_name == mtl.name {
             new_material = CreateMaterialfromMtlData(mtl);
         }
-        model.meshes[it_index] = CreateMesh(object.vertexData, material=new_material);
+        model.meshes[it_index] = CreateMesh(object.name, object.vertexData, material=new_material);
     }
 
     return model;

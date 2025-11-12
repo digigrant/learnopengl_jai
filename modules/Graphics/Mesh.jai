@@ -7,6 +7,7 @@ DrawType :: enum u8 {
 };
 
 Mesh :: struct {
+    name : string;
     vertexData : VertexData;
     indices : [] u32;
     textures : [] Texture;
@@ -16,10 +17,11 @@ Mesh :: struct {
 };
 
 // create a mesh. indices and textures are optional
-CreateMesh :: (vertexData : VertexData, indices : [] u32 = .{ -1, null }, textures : [] Texture = .{ -1, null }, material : *Material = null) -> mesh : *Mesh {
+CreateMesh :: (name : string, vertexData : VertexData, indices : [] u32 = .{ -1, null }, textures : [] Texture = .{ -1, null }, material : *Material = null) -> mesh : *Mesh {
     mesh := New(Mesh);
     if !mesh return null;
 
+    mesh.name = name;
     mesh.vertexData = vertexData;
     mesh.indices = indices;
     mesh.textures = textures;
@@ -50,11 +52,11 @@ DrawMesh :: (using mesh : *Mesh, shader : u32) {
         glBindTexture(GL_TEXTURE_2D, texture.id);
     }
     */
-    glActiveTexture(GL_TEXTURE0);
-    ShaderSetInt(shader, "diffuse", material.diffuse_texture.id.(s32));
-    glBindTexture(GL_TEXTURE_2D, material.diffuse_texture.id);
-
     glBindVertexArray(VAO);
+
+    glActiveTexture(GL_TEXTURE0);
+    ShaderSetInt(shader, "diffuse", 0);
+    glBindTexture(GL_TEXTURE_2D, material.diffuse_texture.id);
     if mesh.drawType == {
         case .DRAW_ARRAYS;      glDrawArrays(GL_TRIANGLES, 0, mesh.vertexData.floats.count.(u32));
         case .DRAW_ELEMENTS;    glDrawElements(GL_TRIANGLES, mesh.indices.count.(u32), GL_UNSIGNED_INT, null);

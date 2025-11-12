@@ -33,10 +33,8 @@ CreateMaterialfromMtlData :: (mtl_data : *MtlData) -> material : *Material {
         diffuse_color = mtl_data.diffuse_color;
         specular_color = mtl_data.specular_color;
         shininess = mtl_data.shininess;
-        print("Diffuse: %\n", mtl_data.diffuse_texture_path);
-        diffuse_texture = CreateTexture(mtl_data.diffuse_texture_path, .DIFFUSE);   // @TODO Implement texture library
-        print("Specular: %\n", mtl_data.specular_texture_path);
-        specular_texture = CreateTexture(mtl_data.specular_texture_path, .SPECULAR);
+        diffuse_texture = BuildFromTextureLibrary(mtl_data.diffuse_texture_path, .DIFFUSE);   // @TODO Implement texture library
+        specular_texture = BuildFromTextureLibrary(mtl_data.specular_texture_path, .SPECULAR);
     }
 
     return material;

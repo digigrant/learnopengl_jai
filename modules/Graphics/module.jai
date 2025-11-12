@@ -4,6 +4,7 @@
 #load "Model.jai";
 #load "Shader.jai";
 #load "Texture.jai";
+#load "TextureLibrary.jai";
 #load "VertexObjects.jai";
 
 #import "SDL";

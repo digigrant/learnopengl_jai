@@ -54,3 +54,7 @@ FreeTexture :: (texture : **Texture) {
     free(texture.*);
     (texture.*) = null;
 }
+
+TextureHasPath :: (texture : *Texture, path : string) -> hasPath : bool {
+    return texture.path == path;
+}
