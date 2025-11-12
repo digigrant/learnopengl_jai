@@ -110,7 +110,6 @@ ImportDataFromMtl :: (path : string) -> ok : bool, data : [] *MtlData {
                 current_material.transparency = 1 - string_to_float(words[1]);
             }
             case "illum"; {
-                print("%\n", words);
                 assert(words.count == 2);
                 current_material.illumination_model = string_to_int(words[1]).(IlluminationModel);
             }

@@ -5,7 +5,8 @@ ParseLineForWords :: (text : string, cursor : *int, print_debug : bool = false, 
     
     // get words
     print_debug_active := print_debug;
-    word_start, last_index := 0;
+    word_start := 0;
+    last_index := -1;
     words : [..] string;
     for char : line {
         if char == {

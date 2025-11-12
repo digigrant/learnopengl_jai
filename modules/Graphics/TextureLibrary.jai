@@ -19,14 +19,12 @@ InitTextureLibrary :: () {
     for diffuse_list it = null;
     for diffuse_list it = null;
     diffuse_count, specular_count = 0;
-
-    print("Init. texture library count: %\n", diffuse_list.count);
 }
 
 BuildFromTextureLibrary :: (path : string, texture_type : TextureType) -> texture : *Texture {
     assert(path != "");
     using texture_library;
-    
+
     texture := FindFromTextureLibrary(path, texture_type);
     if !texture {
         print("Creating texture: '%'\n", path);

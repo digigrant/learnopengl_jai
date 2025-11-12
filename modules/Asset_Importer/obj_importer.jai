@@ -96,7 +96,6 @@ ImportDataFromObj :: (path : string) -> ok : bool, data : *ObjData {
             }
             case "o"; { // start a new object
                 assert(words.count == 2);   // ["o", object_name]
-                print("NEW OBJECT: %\n", words[1]);
 
                 // if we were working on an object, finish it
                 if objects.count > 0 {
@@ -168,10 +167,6 @@ ImportDataFromObj :: (path : string) -> ok : bool, data : *ObjData {
     // Process last object - when we reached the end of the file
     ProcessObjectVertices(objects[objects.count - 1], object_vertices, all_positions, all_normals, all_tex_coords);
 
-    print("%\n", dictionary.entries);
-    print("%\n", material_files);
-    
-
     data.objects = objects;
     data.material_files = material_files;
     return true, data;
@@ -182,7 +177,7 @@ PrintObjData :: (data : *ObjData) {
         print("{%, %,\n", object.name, object.material_name);
         for vertex_index : 0..4 {
             print("\t");
-            for float_index : 0..8 print("% ", object.floats[vertex_index * 8 + float_index]);
+            for float_index : 0..7 print("% ", object.floats[vertex_index * 8 + float_index]);
             print("\n");
         }
         print("...\n%\n\n", object.attributes);
@@ -213,7 +208,7 @@ ProcessObjectVertices :: (current_object : *Object, object_vertices : [] VertexE
 
         // texcoord data - optional, default is 0.0
         new_floats[base_index + 6] = ifx vertex.texcoord_index != 0 then texcoords[vertex.texcoord_index].x else 0.0;
-        new_floats[base_index + 7] = ifx vertex.texcoord_index != 0 then texcoords[vertex.texcoord_index].y else 0.0;
+        new_floats[base_index + 7] = ifx vertex.texcoord_index != 0 then 1.0 - texcoords[vertex.texcoord_index].y else 0.0; // V IS FLIPPED??? THAT WOULDVE BEEN GOOD TO KNOW
         /*
         if it_index < 3 {
             print("Added floats: ");
