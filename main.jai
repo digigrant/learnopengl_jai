@@ -5,7 +5,8 @@
 #import "Extra_Math";
 #import "Asset_Importer";
 
-vertexFloats : [180] float : .[
+cubeVertices : [180] float : .[
+    // positions          // texture Coords
     -0.5, -0.5, -0.5,  0.0, 0.0,
      0.5, -0.5, -0.5,  1.0, 0.0,
      0.5,  0.5, -0.5,  1.0, 1.0,
@@ -49,9 +50,26 @@ vertexFloats : [180] float : .[
     -0.5,  0.5, -0.5,  0.0, 1.0
 ];
 
-indices : [6] u32 : .[
-    0, 1, 3, // first triangle
-    1, 2, 3  // second triangle
+grassVertices : [30] float : .[
+    // positions          // texture Coords (note we set these higher than 1 (together with GL_REPEAT as texture wrapping mode). this will cause the floor texture to repeat)
+    -0.5, -0.5,  0.0,    0.0, 0.0,
+     0.5,  0.5,  0.0,    1.0, 1.0,
+    -0.5,  0.5,  0.0,    0.0, 1.0,
+
+    -0.5, -0.5,  0.0,    0.0, 0.0,
+     0.5, -0.5,  0.0,    1.0, 0.0,
+     0.5,  0.5,  0.0,    1.0, 1.0								
+];
+
+planeVertices : [30] float : .[
+    // positions          // texture Coords (note we set these higher than 1 (together with GL_REPEAT as texture wrapping mode). this will cause the floor texture to repeat)
+     5.0, -0.5,  5.0,  2.0, 0.0,
+    -5.0, -0.5,  5.0,  0.0, 0.0,
+    -5.0, -0.5, -5.0,  0.0, 2.0,
+
+     5.0, -0.5,  5.0,  2.0, 0.0,
+    -5.0, -0.5, -5.0,  0.0, 2.0,
+     5.0, -0.5, -5.0,  2.0, 2.0								
 ];
 
 vertexAttributes : [2] VertexAttribute : .[
@@ -64,7 +82,7 @@ VERTEX_SHADER :: #string DONE
 #version 330 core
 layout (location = 0) in vec3 aPos;
 //layout (location = 1) in vec3 aColor;
-layout (location = 2) in vec2 aTexCoord;
+layout (location = 1) in vec2 aTexCoord;
 
 uniform mat4 model;
 uniform mat4 view;
@@ -113,12 +131,25 @@ main :: () {
     // shader isnt actually allocated or else we would have to free it
 
     texture := BuildFromTextureLibrary("textures/container.jpg", .DIFFUSE);
+    // freed by texture library later
 
     camera := CreateCamera(.{0.0, 0.0, 3.0});
     defer FreeCamera(*camera);
 
-    backpack := CreateModel("models/backpack/backpack.obj");
-    defer FreeModel(*backpack);
+    //backpack := CreateModel("models/backpack/backpack.obj");
+    //defer FreeModel(*backpack);
+
+    cube_mesh := CreateMesh("cube", .{ cubeVertices, vertexAttributes },
+        material = CreateMaterial("cube_mat", "textures/marble.jpg"));
+    defer FreeMesh(*cube_mesh);
+
+    grass_mesh := CreateMesh("grass", .{ grassVertices, vertexAttributes },
+        material = CreateMaterial("grass_mat", "textures/grass.png"));
+    defer FreeMesh(*grass_mesh);
+
+    plane_mesh := CreateMesh("plane", .{ planeVertices, vertexAttributes },
+        material = CreateMaterial("plane_mat", "textures/metal.png"));
+    defer FreeMesh(*plane_mesh);
 
     // timekeeping
     currTimeSeconds, prevTimeSeconds, deltaTimeSeconds : float;
@@ -133,15 +164,12 @@ main :: () {
         ProcessInput(*exit, deltaTimeSeconds, camera);
 
         // clear buffers
-        glClearColor(0.2, 0.3, 0.3, 1.0);
+        glClearColor(0.1, 0.1, 0.1, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // ...rendering happens here...
 
         glUseProgram(shader);
-        model := Matrix4_Identity;
-        RotateMatrix4(*model, currTimeSeconds * #run DegToRad(50.0), .{0.5, 1.0, 0.0});
-        ShaderSetMat4(shader, "model", *model);
 
         view := CameraGetViewMatrix(camera);
         ShaderSetMat4(shader, "view", *view);
@@ -149,7 +177,24 @@ main :: () {
         projection := make_projection_matrix(DegToRad(camera.fov), GetWindowWidth().(float)/GetWindowHeight(), 0.1, 100.0);
         ShaderSetMat4(shader, "projection", *projection);
 
-        DrawModel(backpack, shader);
+        //DrawModel(backpack, shader);
+
+
+        // cube 1
+        model := Matrix4_Identity;
+        translate(*model, .{ -1.0, 0.0, -1.0 });
+        ShaderSetMat4(shader, "model", *model);
+        DrawMesh(cube_mesh, shader);
+
+        model = Matrix4_Identity;
+        translate(*model, .{ 2.0, 0.0, 0.0 });
+        ShaderSetMat4(shader, "model", *model);
+        DrawMesh(cube_mesh, shader);
+
+        // floor
+        model = Matrix4_Identity;
+        ShaderSetMat4(shader, "model", *model);
+        DrawMesh(plane_mesh, shader);
 
         SwapBuffers();
     }

@@ -24,6 +24,19 @@ Material :: struct {
     // there can be other things too but I dont really care about those for now
 };
 
+CreateMaterial :: (name : string, diffuse_texture_path : string = .{}) -> material : *Material {
+    material := New(Material);
+    if !material return null;
+    
+    material.name = name;
+
+    if diffuse_texture_path.data {
+        material.diffuse_texture = BuildFromTextureLibrary(diffuse_texture_path, .DIFFUSE);
+    }
+
+    return material;
+}
+
 CreateMaterialfromMtlData :: (mtl_data : *MtlData) -> material : *Material {
     material := New(Material);
     {
@@ -38,4 +51,10 @@ CreateMaterialfromMtlData :: (mtl_data : *MtlData) -> material : *Material {
     }
 
     return material;
+}
+
+FreeMaterial :: (material : **Material) {
+    if !material || !(material.*) return;
+    free(material.*);
+    (material.*) = null;
 }
