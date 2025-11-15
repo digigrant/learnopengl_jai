@@ -1,9 +1,11 @@
 #import "Basic";
 #import "GL"; // we only need this for any GL features we enable in main - just temporary
-#import "Graphics";
 #import "Math";
 #import "Extra_Math";
 #import "Asset_Importer";
+
+using,except (Init, Shutdown) Graphics :: #import "Graphics";
+using,except (Init, Shutdown) Input :: #import "Input";
 
 cubeVertices : [180] float : .[
     // positions          // texture Coords
@@ -114,14 +116,7 @@ void main() {
 DONE
 
 main :: () {
-    if !Init() {
-        print("Something bad happened. Let's hit the bricks\n");
-        Shutdown();
-        return;
-    }
-
-    InitTextureLibrary();
-    defer FreeEntireTextureLibrary();
+    InitAllSystems();
 
     // enable gl systems
     // we just do this here because the tutorials have me change this a lot
@@ -199,5 +194,20 @@ main :: () {
         SwapBuffers();
     }
     
-    Shutdown();
+    ShutdownAllSystems();
+}
+
+InitAllSystems :: () -> ok : bool {
+    if !Graphics.Init() || !Input.Init() {
+        print("Something bad happened. Let's hit the bricks\n");
+        ShutdownAllSystems();
+        return false;
+    }
+
+    return true;
+}
+
+ShutdownAllSystems :: () {
+    Graphics.Shutdown();
+    Input.Shutdown();
 }
