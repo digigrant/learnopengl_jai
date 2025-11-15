@@ -10,6 +10,26 @@
 #import "SDL";
 #import "GL";
 
+#if OS == {
+    case .WINDOWS;
+        JOYSTICK_LEFT_THUMBSTICK_X  :: 0;
+        JOYSTICK_LEFT_THUMBSTICK_Y  :: 1;
+        JOYSTICK_RIGHT_THUMBSTICK_X :: 2;
+        JOYSTICK_RIGHT_THUMBSTICK_Y :: 3;
+        JOYSTICK_LEFT_TRIGGER       :: 4;
+        JOYSTICK_RIGHT_TRIGGER      :: 5;
+        CAMERA_SENSITIVITY :: 0.08;
+
+    case .LINUX;
+        JOYSTICK_LEFT_THUMBSTICK_X  :: 0;
+        JOYSTICK_LEFT_THUMBSTICK_Y  :: 1;
+        JOYSTICK_RIGHT_THUMBSTICK_X :: 3;
+        JOYSTICK_RIGHT_THUMBSTICK_Y :: 4;
+        JOYSTICK_LEFT_TRIGGER       :: 2;
+        JOYSTICK_RIGHT_TRIGGER      :: 5;
+        CAMERA_SENSITIVITY :: 3.0;
+}
+
 // global consts
 DEFAULT_WINDOW_WIDTH    :: 800;
 DEFAULT_WINDOW_HEIGHT   :: 600;
@@ -131,8 +151,8 @@ ProcessInput :: (exit : *bool, deltaTimeSeconds : float, camera : *Camera) {
         start_button := SDL_JoystickGetButton(joysticks[0], 7);
         if start_button then (exit.*) = true;
 
-        left_thumbstick := GetJoystickThumbstickNormalized(joysticks[0], 0, 1);
-        right_thumbstick := GetJoystickThumbstickNormalized(joysticks[0], 3, 4);
+        left_thumbstick := GetJoystickThumbstickNormalized(joysticks[0], JOYSTICK_LEFT_THUMBSTICK_X, JOYSTICK_LEFT_THUMBSTICK_Y);
+        right_thumbstick := GetJoystickThumbstickNormalized(joysticks[0], JOYSTICK_RIGHT_THUMBSTICK_X, JOYSTICK_RIGHT_THUMBSTICK_Y);
 
         if length(left_thumbstick) > JOYSTICK_DEADZONE {
             ApplyMovement(*translation, .{x=left_thumbstick.x}, *movementKeyPressed);
@@ -140,8 +160,7 @@ ProcessInput :: (exit : *bool, deltaTimeSeconds : float, camera : *Camera) {
         }
 
         if length(right_thumbstick) > JOYSTICK_DEADZONE {
-            SENSITIVITY :: 3.0;
-            CameraRotate(camera, .{right_thumbstick.y, right_thumbstick.x} * SENSITIVITY);
+            CameraRotate(camera, .{right_thumbstick.y, right_thumbstick.x} * CAMERA_SENSITIVITY);
         }
 
         //for 0..SDL_JoystickNumButtons(joysticks[0])-1 print("% ", SDL_JoystickGetButton(joysticks[0], it));
@@ -217,8 +236,8 @@ GetJoystickThumbstickNormalized :: (joystick : *SDL_Joystick, x_axis : s32, y_ax
 }
 
 GetJoystickTriggersNormalized :: (joystick : *SDL_Joystick) -> Vector2 {
-    left_trigger : s32 = SDL_JoystickGetAxis(joystick, 2);
-    right_trigger : s32 = SDL_JoystickGetAxis(joystick, 5);
+    left_trigger : s32 = SDL_JoystickGetAxis(joystick, JOYSTICK_LEFT_TRIGGER);
+    right_trigger : s32 = SDL_JoystickGetAxis(joystick, JOYSTICK_RIGHT_TRIGGER);
     triggers_normalized : Vector2 = .{
         (left_trigger - S16_MIN.(s32)) / U16_MAX.(float),
         (right_trigger - S16_MIN.(s32)) / U16_MAX.(float)
