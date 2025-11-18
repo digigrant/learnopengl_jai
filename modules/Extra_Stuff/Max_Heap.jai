@@ -10,7 +10,6 @@
 Heapify :: (array : [] $T, fp_Compare : (a : *T, b : *T) -> int) -> heap_view : [] T {
     // bubble down starting from first parent
     last_parent := GetParentIndex(array.count - 1);
-    print("last_parent = %\n", last_parent);
     for < 0..last_parent BubbleDown(array, fp_Compare, it);
     return array;
 }

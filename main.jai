@@ -154,6 +154,18 @@ main :: () {
     // timekeeping
     currTimeSeconds, prevTimeSeconds, deltaTimeSeconds : float;
 
+    BlendableObject :: struct {
+        distance_from_camera : float;
+        index : int;
+    };
+    CompareBlendableObjects :: (a : *BlendableObject, b : *BlendableObject) -> int {
+        diff := a.distance_from_camera - b.distance_from_camera;
+        if abs(diff) < 0.0001 return 0;
+        return ifx diff > 0 then 1 else -1;
+    }
+
+    blendable_objects : [..] BlendableObject;
+
     // main loop
     exit := false;
     while !exit {
@@ -204,9 +216,17 @@ main :: () {
             .{  0.5,  0.0, -0.60 }
         ];
 
-        for grass_positions {
+        // sort
+        array_reset(*blendable_objects);
+        for pos : grass_positions array_add(*blendable_objects, .{ length(pos - camera.position), it_index });
+        heap_view := Heapify(blendable_objects, CompareBlendableObjects);
+
+        current_blendable_object : *BlendableObject;
+        for 0..blendable_objects.count -1 {
+            current_blendable_object := HeapPop(*heap_view, CompareBlendableObjects);
+
             model = Matrix4_Identity;
-            translate(*model, it);
+            translate(*model, grass_positions[current_blendable_object.index]);
             ShaderSetMat4(shader, "model", *model);
             DrawMesh(grass_mesh, shader);
         }
