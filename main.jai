@@ -1,7 +1,7 @@
 #import "Basic";
 #import "GL"; // we only need this for any GL features we enable in main - just temporary
 #import "Math";
-#import "Extra_Math";
+#import "Extra_Stuff";
 #import "Asset_Importer";
 
 using,except (Init, Shutdown) Graphics :: #import "Graphics";
@@ -111,7 +111,10 @@ out vec4 FragColor;
 uniform sampler2D diffuse;
 
 void main() {
-    FragColor = texture(diffuse, TexCoord);
+
+    vec4 texColor = texture(diffuse, TexCoord);
+    if (texColor.a < 0.1) discard;
+    FragColor = texColor;
 }
 DONE
 
@@ -121,6 +124,8 @@ main :: () {
     // enable gl systems
     // we just do this here because the tutorials have me change this a lot
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     shader := CreateShader(VERTEX_SHADER, FRAGMENT_SHADER);
     // shader isnt actually allocated or else we would have to free it
@@ -139,7 +144,7 @@ main :: () {
     defer FreeMesh(*cube_mesh);
 
     grass_mesh := CreateMesh("grass", .{ grassVertices, vertexAttributes },
-        material = CreateMaterial("grass_mat", "textures/grass.png"));
+        material = CreateMaterial("grass_mat", "textures/blending_transparent_window.png"));
     defer FreeMesh(*grass_mesh);
 
     plane_mesh := CreateMesh("plane", .{ planeVertices, vertexAttributes },
@@ -190,6 +195,21 @@ main :: () {
         model = Matrix4_Identity;
         ShaderSetMat4(shader, "model", *model);
         DrawMesh(plane_mesh, shader);
+
+        grass_positions : [5] Vector3 : .[
+            .{ -1.5,  0.0, -0.48 },
+            .{  1.5,  0.0,  0.51 },
+            .{  0.0,  0.0,  0.70 },
+            .{ -0.3,  0.0, -2.30 },
+            .{  0.5,  0.0, -0.60 }
+        ];
+
+        for grass_positions {
+            model = Matrix4_Identity;
+            translate(*model, it);
+            ShaderSetMat4(shader, "model", *model);
+            DrawMesh(grass_mesh, shader);
+        }
 
         SwapBuffers();
     }

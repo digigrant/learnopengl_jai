@@ -13,3 +13,8 @@ RotateMatrix4 :: (m : *Matrix4, angle : float, axis : Vector3) {
     new_m : Matrix4 = rotate(m, q);     // rotates out of place, ew
     memcpy(m, *new_m, size_of(Matrix4));
 }
+
+// why the hell is this not in the standard Math lib x_x
+Log2 :: (x : $T) -> float {
+    return log(x.(float)) / #run log(2);
+}
