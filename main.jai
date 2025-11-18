@@ -8,48 +8,48 @@ using,except (Init, Shutdown) Graphics :: #import "Graphics";
 using,except (Init, Shutdown) Input :: #import "Input";
 
 cubeVertices : [180] float : .[
-    // positions          // texture Coords
-    -0.5, -0.5, -0.5,  0.0, 0.0,
-     0.5, -0.5, -0.5,  1.0, 0.0,
-     0.5,  0.5, -0.5,  1.0, 1.0,
-     0.5,  0.5, -0.5,  1.0, 1.0,
-    -0.5,  0.5, -0.5,  0.0, 1.0,
-    -0.5, -0.5, -0.5,  0.0, 0.0,
-
-    -0.5, -0.5,  0.5,  0.0, 0.0,
-     0.5, -0.5,  0.5,  1.0, 0.0,
-     0.5,  0.5,  0.5,  1.0, 1.0,
-     0.5,  0.5,  0.5,  1.0, 1.0,
-    -0.5,  0.5,  0.5,  0.0, 1.0,
-    -0.5, -0.5,  0.5,  0.0, 0.0,
-
-    -0.5,  0.5,  0.5,  1.0, 0.0,
-    -0.5,  0.5, -0.5,  1.0, 1.0,
-    -0.5, -0.5, -0.5,  0.0, 1.0,
-    -0.5, -0.5, -0.5,  0.0, 1.0,
-    -0.5, -0.5,  0.5,  0.0, 0.0,
-    -0.5,  0.5,  0.5,  1.0, 0.0,
-
-     0.5,  0.5,  0.5,  1.0, 0.0,
-     0.5,  0.5, -0.5,  1.0, 1.0,
-     0.5, -0.5, -0.5,  0.0, 1.0,
-     0.5, -0.5, -0.5,  0.0, 1.0,
-     0.5, -0.5,  0.5,  0.0, 0.0,
-     0.5,  0.5,  0.5,  1.0, 0.0,
-
-    -0.5, -0.5, -0.5,  0.0, 1.0,
-     0.5, -0.5, -0.5,  1.0, 1.0,
-     0.5, -0.5,  0.5,  1.0, 0.0,
-     0.5, -0.5,  0.5,  1.0, 0.0,
-    -0.5, -0.5,  0.5,  0.0, 0.0,
-    -0.5, -0.5, -0.5,  0.0, 1.0,
-
-    -0.5,  0.5, -0.5,  0.0, 1.0,
-     0.5,  0.5, -0.5,  1.0, 1.0,
-     0.5,  0.5,  0.5,  1.0, 0.0,
-     0.5,  0.5,  0.5,  1.0, 0.0,
-    -0.5,  0.5,  0.5,  0.0, 0.0,
-    -0.5,  0.5, -0.5,  0.0, 1.0
+    // Back face
+    -0.5, -0.5, -0.5,  0.0, 0.0, // Bottom-left
+     0.5,  0.5, -0.5,  1.0, 1.0, // top-right
+     0.5, -0.5, -0.5,  1.0, 0.0, // bottom-right         
+     0.5,  0.5, -0.5,  1.0, 1.0, // top-right
+    -0.5, -0.5, -0.5,  0.0, 0.0, // bottom-left
+    -0.5,  0.5, -0.5,  0.0, 1.0, // top-left
+    // Front face
+    -0.5, -0.5,  0.5,  0.0, 0.0, // bottom-left
+     0.5, -0.5,  0.5,  1.0, 0.0, // bottom-right
+     0.5,  0.5,  0.5,  1.0, 1.0, // top-right
+     0.5,  0.5,  0.5,  1.0, 1.0, // top-right
+    -0.5,  0.5,  0.5,  0.0, 1.0, // top-left
+    -0.5, -0.5,  0.5,  0.0, 0.0, // bottom-left
+    // Left face
+    -0.5,  0.5,  0.5,  1.0, 0.0, // top-right
+    -0.5,  0.5, -0.5,  1.0, 1.0, // top-left
+    -0.5, -0.5, -0.5,  0.0, 1.0, // bottom-left
+    -0.5, -0.5, -0.5,  0.0, 1.0, // bottom-left
+    -0.5, -0.5,  0.5,  0.0, 0.0, // bottom-right
+    -0.5,  0.5,  0.5,  1.0, 0.0, // top-right
+    // Right face
+     0.5,  0.5,  0.5,  1.0, 0.0, // top-left
+     0.5, -0.5, -0.5,  0.0, 1.0, // bottom-right
+     0.5,  0.5, -0.5,  1.0, 1.0, // top-right         
+     0.5, -0.5, -0.5,  0.0, 1.0, // bottom-right
+     0.5,  0.5,  0.5,  1.0, 0.0, // top-left
+     0.5, -0.5,  0.5,  0.0, 0.0, // bottom-left     
+    // Bottom face
+    -0.5, -0.5, -0.5,  0.0, 1.0, // top-right
+     0.5, -0.5, -0.5,  1.0, 1.0, // top-left
+     0.5, -0.5,  0.5,  1.0, 0.0, // bottom-left
+     0.5, -0.5,  0.5,  1.0, 0.0, // bottom-left
+    -0.5, -0.5,  0.5,  0.0, 0.0, // bottom-right
+    -0.5, -0.5, -0.5,  0.0, 1.0, // top-right
+    // Top face
+    -0.5,  0.5, -0.5,  0.0, 1.0, // top-left
+     0.5,  0.5,  0.5,  1.0, 0.0, // bottom-right
+     0.5,  0.5, -0.5,  1.0, 1.0, // top-right     
+     0.5,  0.5,  0.5,  1.0, 0.0, // bottom-right
+    -0.5,  0.5, -0.5,  0.0, 1.0, // top-left
+    -0.5,  0.5,  0.5,  0.0, 0.0  // bottom-left        
 ];
 
 grassVertices : [30] float : .[
@@ -66,12 +66,12 @@ grassVertices : [30] float : .[
 planeVertices : [30] float : .[
     // positions          // texture Coords (note we set these higher than 1 (together with GL_REPEAT as texture wrapping mode). this will cause the floor texture to repeat)
      5.0, -0.5,  5.0,  2.0, 0.0,
-    -5.0, -0.5,  5.0,  0.0, 0.0,
     -5.0, -0.5, -5.0,  0.0, 2.0,
+    -5.0, -0.5,  5.0,  0.0, 0.0,
 
      5.0, -0.5,  5.0,  2.0, 0.0,
-    -5.0, -0.5, -5.0,  0.0, 2.0,
-     5.0, -0.5, -5.0,  2.0, 2.0								
+     5.0, -0.5, -5.0,  2.0, 2.0,
+    -5.0, -0.5, -5.0,  0.0, 2.0						
 ];
 
 vertexAttributes : [2] VertexAttribute : .[
@@ -126,6 +126,7 @@ main :: () {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_CULL_FACE);  // cull back faces; right now this culls a bunch of planes we dont want to get culled
 
     shader := CreateShader(VERTEX_SHADER, FRAGMENT_SHADER);
     // shader isnt actually allocated or else we would have to free it
@@ -215,6 +216,7 @@ main :: () {
             .{ -0.3,  0.0, -2.30 },
             .{  0.5,  0.0, -0.60 }
         ];
+        grass_yaws : [5] float = .[ 0.0, 0.0, 0.0, 0.0, 0.0 ];
 
         // sort
         array_reset(*blendable_objects);
@@ -224,9 +226,16 @@ main :: () {
         current_blendable_object : *BlendableObject;
         for 0..blendable_objects.count -1 {
             current_blendable_object := HeapPop(*heap_view, CompareBlendableObjects);
+            using,only(index) current_blendable_object;
+
+            // prevent planes from being culled by back face culling:
+            // if this plane is facing away from the camera, rotate it 180 degrees
+            current_front : Vector3 = .{0.0, 0.0, cos(grass_yaws[index])};
+            if dot_product(grass_positions[index] - camera.position, current_front) > 0.0 grass_yaws[index] = -(grass_yaws[index] - PI);
 
             model = Matrix4_Identity;
-            translate(*model, grass_positions[current_blendable_object.index]);
+            translate(*model, grass_positions[index]);
+            RotateMatrix4(*model, grass_yaws[index], .{0.0, 1.0, 0.0});
             ShaderSetMat4(shader, "model", *model);
             DrawMesh(grass_mesh, shader);
         }
