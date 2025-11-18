@@ -167,6 +167,29 @@ main :: () {
 
     blendable_objects : [..] BlendableObject;
 
+    FBO : GLuint;
+    glGenFramebuffers(1, *FBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+
+    texture_color_buffer : GLuint;
+    glGenTextures(1, *texture_color_buffer);
+    glBindTexture(GL_TEXTURE_2D, texture_color_buffer);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, windowWidth, windowHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, null);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture_color_buffer, 0);
+
+    RBO : GLuint;
+    glGenRenderbuffers(1, *RBO);
+    glBindRenderbuffer(GL_RENDERBUFFER, RBO);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, windowWidth, windowHeight);
+    glBindRenderbuffer(GL_RENDERBUFFER, 0);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, RBO);
+
+    if glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE {
+        print("ERROR::FRAMEBUFFER:: Framebuffer is not complete!");
+    }
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
     // main loop
     exit := false;
     while !exit {
@@ -209,6 +232,7 @@ main :: () {
         ShaderSetMat4(shader, "model", *model);
         DrawMesh(plane_mesh, shader);
 
+        // blendable objects
         grass_positions : [5] Vector3 : .[
             .{ -1.5,  0.0, -0.48 },
             .{  1.5,  0.0,  0.51 },
@@ -223,6 +247,7 @@ main :: () {
         for pos : grass_positions array_add(*blendable_objects, .{ length(pos - camera.position), it_index });
         heap_view := Heapify(blendable_objects, CompareBlendableObjects);
 
+        // draw
         current_blendable_object : *BlendableObject;
         for 0..blendable_objects.count -1 {
             current_blendable_object := HeapPop(*heap_view, CompareBlendableObjects);
