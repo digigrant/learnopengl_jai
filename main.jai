@@ -74,10 +74,25 @@ planeVertices : [30] float : .[
     -5.0, -0.5, -5.0,  0.0, 2.0						
 ];
 
+screenVertices : [24] float : .[
+    -1.0, -1.0, 0.0, 0.0,
+     1.0,  1.0, 1.0, 1.0,
+    -1.0,  1.0, 0.0, 1.0,
+
+    -1.0, -1.0, 0.0, 0.0,
+     1.0, -1.0, 1.0, 0.0,
+     1.0,  1.0, 1.0, 1.0,
+];
+
 vertexAttributes : [2] VertexAttribute : .[
     .{3},   // position
     //.{3},   // color
     .{2},   // texcoords
+];
+
+screenVertexAttributes : [2] VertexAttribute : .[
+    .{2},
+    .{2}
 ];
 
 VERTEX_SHADER :: #string DONE
@@ -118,6 +133,31 @@ void main() {
 }
 DONE
 
+SCREEN_VERTEX_SHADER :: #string DONE
+#version 330 core
+layout (location = 0) in vec2 aPos;
+layout (location = 1) in vec2 aTexCoords;
+
+out vec2 TexCoords;
+
+void main() {
+    gl_Position = vec4(aPos.x, aPos.y, 0.0, 1.0);
+    TexCoords = aTexCoords;
+}
+DONE
+
+SCREEN_FRAGMENT_SHADER :: #string DONE
+#version 330 core
+out vec4 FragColor;
+
+in vec2 TexCoords;
+uniform sampler2D screenTexture;
+
+void main() {
+    FragColor = texture(screenTexture, TexCoords);
+}
+DONE
+
 main :: () {
     InitAllSystems();
 
@@ -126,7 +166,7 @@ main :: () {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_CULL_FACE);  // cull back faces; right now this culls a bunch of planes we dont want to get culled
+    glEnable(GL_CULL_FACE);  // cull back faces
 
     shader := CreateShader(VERTEX_SHADER, FRAGMENT_SHADER);
     // shader isnt actually allocated or else we would have to free it
@@ -175,20 +215,25 @@ main :: () {
     glGenTextures(1, *texture_color_buffer);
     glBindTexture(GL_TEXTURE_2D, texture_color_buffer);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, windowWidth, windowHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, null);
-    glBindTexture(GL_TEXTURE_2D, 0);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture_color_buffer, 0);
 
     RBO : GLuint;
     glGenRenderbuffers(1, *RBO);
     glBindRenderbuffer(GL_RENDERBUFFER, RBO);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, windowWidth, windowHeight);
-    glBindRenderbuffer(GL_RENDERBUFFER, 0);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, RBO);
 
     if glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE {
         print("ERROR::FRAMEBUFFER:: Framebuffer is not complete!");
     }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+    screen_vao, screen_vbo := CreateVertexObjects(.{screenVertices, screenVertexAttributes});
+    screen_shader := CreateShader(SCREEN_VERTEX_SHADER, SCREEN_FRAGMENT_SHADER);
 
     // main loop
     exit := false;
@@ -199,12 +244,11 @@ main :: () {
 
         ProcessInput(*exit, deltaTimeSeconds, camera);
 
-        // clear buffers
+        // set up first render pass
+        glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+        glEnable(GL_DEPTH_TEST);
         glClearColor(0.1, 0.1, 0.1, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        // ...rendering happens here...
-
         glUseProgram(shader);
 
         view := CameraGetViewMatrix(camera);
@@ -264,6 +308,17 @@ main :: () {
             ShaderSetMat4(shader, "model", *model);
             DrawMesh(grass_mesh, shader);
         }
+
+        // set up second render pass
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glClearColor(1.0, 1.0, 1.0, 1.0);
+        glClear(GL_COLOR_BUFFER_BIT);
+        glUseProgram(screen_shader);
+        ShaderSetInt(screen_shader, "screenTexture", 0);
+        glBindVertexArray(screen_vao);
+        glDisable(GL_DEPTH_TEST);
+        glBindTexture(GL_TEXTURE_2D, texture_color_buffer);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
 
         SwapBuffers();
     }
