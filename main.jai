@@ -84,6 +84,51 @@ screenVertices : [24] float : .[
      1.0,  1.0, 1.0, 1.0,
 ];
 
+skyboxVertices : [108] float : .[
+    // positions          
+    -1.0,  1.0, -1.0,
+    -1.0, -1.0, -1.0,
+     1.0, -1.0, -1.0,
+     1.0, -1.0, -1.0,
+     1.0,  1.0, -1.0,
+    -1.0,  1.0, -1.0,
+
+    -1.0, -1.0,  1.0,
+    -1.0, -1.0, -1.0,
+    -1.0,  1.0, -1.0,
+    -1.0,  1.0, -1.0,
+    -1.0,  1.0,  1.0,
+    -1.0, -1.0,  1.0,
+
+     1.0, -1.0, -1.0,
+     1.0, -1.0,  1.0,
+     1.0,  1.0,  1.0,
+     1.0,  1.0,  1.0,
+     1.0,  1.0, -1.0,
+     1.0, -1.0, -1.0,
+
+    -1.0, -1.0,  1.0,
+    -1.0,  1.0,  1.0,
+     1.0,  1.0,  1.0,
+     1.0,  1.0,  1.0,
+     1.0, -1.0,  1.0,
+    -1.0, -1.0,  1.0,
+
+    -1.0,  1.0, -1.0,
+     1.0,  1.0, -1.0,
+     1.0,  1.0,  1.0,
+     1.0,  1.0,  1.0,
+    -1.0,  1.0,  1.0,
+    -1.0,  1.0, -1.0,
+
+    -1.0, -1.0, -1.0,
+    -1.0, -1.0,  1.0,
+     1.0, -1.0, -1.0,
+     1.0, -1.0, -1.0,
+    -1.0, -1.0,  1.0,
+     1.0, -1.0,  1.0
+];
+
 vertexAttributes : [2] VertexAttribute : .[
     .{3},   // position
     //.{3},   // color
@@ -93,6 +138,10 @@ vertexAttributes : [2] VertexAttribute : .[
 screenVertexAttributes : [2] VertexAttribute : .[
     .{2},
     .{2}
+];
+
+skyboxVertexAttributes : [1] VertexAttribute : .[
+    .{3}
 ];
 
 VERTEX_SHADER :: #string DONE
@@ -155,6 +204,34 @@ uniform sampler2D screenTexture;
 
 void main() {
     FragColor = texture(screenTexture, TexCoords);
+}
+DONE
+
+SKYBOX_VERTEX_SHADER :: #string DONE
+#version 330 core
+layout (location = 0) in vec3 aPos;
+
+out vec3 TexCoords;
+
+uniform mat4 projection;
+uniform mat4 view;
+
+void main() {
+    TexCoords = aPos;
+    gl_Position = projection * view * vec4(aPos, 1.0);
+}
+DONE
+
+SKYBOX_FRAGMENT_SHADER :: #string DONE
+#version 330 core
+out vec4 FragColor;
+
+in vec3 TexCoords;
+
+uniform samplerCube skybox;
+
+void main() {
+    FragColor = texture(skybox, TexCoords);
 }
 DONE
 
@@ -235,6 +312,18 @@ main :: () {
     screen_vao, screen_vbo := CreateVertexObjects(.{screenVertices, screenVertexAttributes});
     screen_shader := CreateShader(SCREEN_VERTEX_SHADER, SCREEN_FRAGMENT_SHADER);
 
+    skybox_faces : [6] string : .[
+        "textures/skybox/right.jpg",
+        "textures/skybox/left.jpg",
+        "textures/skybox/top.jpg",
+        "textures/skybox/bottom.jpg",
+        "textures/skybox/front.jpg",
+        "textures/skybox/back.jpg"
+    ];
+    skybox := CreateCubemap(*skybox_faces);
+    skybox_vao, _ := CreateVertexObjects(.{skyboxVertices, skyboxVertexAttributes});
+    skybox_shader := CreateShader(SKYBOX_VERTEX_SHADER, SKYBOX_FRAGMENT_SHADER);
+
     // main loop
     exit := false;
     while !exit {
@@ -249,16 +338,15 @@ main :: () {
         glEnable(GL_DEPTH_TEST);
         glClearColor(0.1, 0.1, 0.1, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glUseProgram(shader);
 
         view := CameraGetViewMatrix(camera);
-        ShaderSetMat4(shader, "view", *view);
-
         projection := make_projection_matrix(DegToRad(camera.fov), GetWindowWidth().(float)/GetWindowHeight(), 0.1, 100.0);
+
+        glUseProgram(shader);
+        ShaderSetMat4(shader, "view", *view);
         ShaderSetMat4(shader, "projection", *projection);
 
         //DrawModel(backpack, shader);
-
 
         // cube 1
         model := Matrix4_Identity;
@@ -308,6 +396,24 @@ main :: () {
             ShaderSetMat4(shader, "model", *model);
             DrawMesh(grass_mesh, shader);
         }
+
+        // draw skybox last
+        glDepthFunc(GL_LEQUAL);
+        glUseProgram(skybox_shader);
+        skybox_view := view;
+        for 0..3 {
+            using skybox_view;
+            coef[it][3] = 0.0;
+            coef[3][it] = 0.0;
+        }
+        ShaderSetMat4(skybox_shader, "view", *skybox_view);
+        ShaderSetMat4(skybox_shader, "projection", *projection);
+        glBindVertexArray(skybox_vao);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, skybox.id); // DrawCubemap()
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        glBindVertexArray(0);
+        glDepthFunc(GL_LESS);
 
         // set up second render pass
         glBindFramebuffer(GL_FRAMEBUFFER, 0);

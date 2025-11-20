@@ -1,4 +1,5 @@
 #load "Camera.jai";
+#load "Cubemap.jai";
 #load "Material.jai";
 #load "Mesh.jai";
 #load "Model.jai";
