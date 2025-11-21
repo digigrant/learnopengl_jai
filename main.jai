@@ -327,6 +327,24 @@ void main () {
 }
 DONE
 
+GLASS_FRAGMENT_SHADER :: #string DONE
+#version 330 core
+out vec4 FragColor;
+
+in vec3 Normal;
+in vec3 Position;
+
+uniform vec3 camera_pos;
+uniform samplerCube skybox;
+
+void main () {
+    float ratio = 1.00 / 1.52;
+    vec3 I = normalize(Position - camera_pos);
+    vec3 R = refract(I, normalize(Normal), ratio);
+    FragColor = vec4(texture(skybox, R).rgb, 1.0);
+}
+DONE
+
 main :: () {
     InitAllSystems();
 
@@ -346,8 +364,8 @@ main :: () {
     camera := CreateCamera(.{0.0, 0.0, 3.0});
     defer FreeCamera(*camera);
 
-    //backpack := CreateModel("models/backpack/backpack.obj");
-    //defer FreeModel(*backpack);
+    backpack := CreateModel("models/backpack/backpack.obj");
+    defer FreeModel(*backpack);
 
     cube_mesh := CreateMesh("cube", .{ cubeVertices, vertexAttributes },
         material = CreateMaterial("cube_mat", "textures/marble.jpg"));
@@ -421,6 +439,7 @@ main :: () {
     ShaderSetInt(skybox_shader, "skybox", 0);
 
     mirror_shader := CreateShader(MIRROR_VERTEX_SHADER, MIRROR_FRAGMENT_SHADER);
+    glass_shader := CreateShader(MIRROR_VERTEX_SHADER, GLASS_FRAGMENT_SHADER);
 
     // main loop
     exit := false;
@@ -444,8 +463,6 @@ main :: () {
         ShaderSetMat4(shader, "view", *view);
         ShaderSetMat4(shader, "projection", *projection);
 
-        //DrawModel(backpack, shader);
-
         // cube 1
         model := Matrix4_Identity;
         translate(*model, .{ -1.0, 0.0, -1.0 });
@@ -463,14 +480,24 @@ main :: () {
         DrawMesh(plane_mesh, shader);
 
         // mirror cuboid
+        glUseProgram(mirror_shader);
         model = Matrix4_Identity;
         translate(*model, .{-10.0, 0.0, 10.0});
-        glUseProgram(mirror_shader);
         ShaderSetMat4(mirror_shader, "model", *model);
         ShaderSetMat4(mirror_shader, "view", *view);
         ShaderSetMat4(mirror_shader, "projection", *projection);
         ShaderSetVec3(mirror_shader, "camera_pos", *(camera.position));
         DrawMesh(cuboid_mesh, mirror_shader);
+
+        // glass backpack
+        glUseProgram(glass_shader);
+        model = Matrix4_Identity;
+        translate(*model, .{10.0, 0.0, 10.0});
+        ShaderSetMat4(glass_shader, "model", *model);
+        ShaderSetMat4(glass_shader, "view", *view);
+        ShaderSetMat4(glass_shader, "projection", *projection);
+        ShaderSetVec3(glass_shader, "camera_pos", *(camera.position));
+        DrawModel(backpack, glass_shader);
 
         // draw skybox last
         glDepthFunc(GL_LEQUAL);
