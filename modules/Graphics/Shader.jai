@@ -58,6 +58,10 @@ ShaderSetFloat :: (shaderId : u32, name : string, value : float) {
     glUniform1f(glGetUniformLocation(shaderId, to_c_string(name)), value);
 }
 
+ShaderSetVec3 :: (shaderId : u32, name : string, vec3 : *Vector3) {
+    glUniform3fv(glGetUniformLocation(shaderId, to_c_string(name)), 1, vec3.component.data);
+}
+
 ShaderSetMat4 :: (shaderId : u32, name : string, mat4 : *Matrix4) {
     glUniformMatrix4fv(glGetUniformLocation(shaderId, to_c_string(name)), 1, GL_TRUE, mat4.floats.data);
 }

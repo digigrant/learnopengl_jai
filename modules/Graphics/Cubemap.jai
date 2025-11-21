@@ -11,7 +11,7 @@ CreateCubemap :: (faces : *[6] string) -> cubemap : *Cubemap {
     glGenTextures(1, *(cubemap.id));
     glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap.id);
 
-    stbi_set_flip_vertically_on_load(1);
+    stbi_set_flip_vertically_on_load(0);
 
     width, height, nr_channels : s32;
     for path : faces.* {
@@ -34,6 +34,8 @@ CreateCubemap :: (faces : *[6] string) -> cubemap : *Cubemap {
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    stbi_set_flip_vertically_on_load(0);
 
     return cubemap;
 }

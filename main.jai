@@ -129,6 +129,56 @@ skyboxVertices : [108] float : .[
      1.0, -1.0,  1.0
 ];
 
+cuboidVertices : [216] float : .[
+    // back
+    -0.5, -0.5, -0.5,  0.0,  0.0, -1.0,
+     0.5,  0.5, -0.5,  0.0,  0.0, -1.0,
+     0.5, -0.5, -0.5,  0.0,  0.0, -1.0, 
+     0.5,  0.5, -0.5,  0.0,  0.0, -1.0, 
+    -0.5, -0.5, -0.5,  0.0,  0.0, -1.0, 
+    -0.5,  0.5, -0.5,  0.0,  0.0, -1.0,
+
+    // front
+    -0.5, -0.5,  0.5,  0.0,  0.0,  1.0,
+     0.5, -0.5,  0.5,  0.0,  0.0,  1.0,
+     0.5,  0.5,  0.5,  0.0,  0.0,  1.0,
+     0.5,  0.5,  0.5,  0.0,  0.0,  1.0,
+    -0.5,  0.5,  0.5,  0.0,  0.0,  1.0,
+    -0.5, -0.5,  0.5,  0.0,  0.0,  1.0,
+
+    // left
+    -0.5,  0.5,  0.5, -1.0,  0.0,  0.0,
+    -0.5,  0.5, -0.5, -1.0,  0.0,  0.0,
+    -0.5, -0.5, -0.5, -1.0,  0.0,  0.0,
+    -0.5, -0.5, -0.5, -1.0,  0.0,  0.0,
+    -0.5, -0.5,  0.5, -1.0,  0.0,  0.0,
+    -0.5,  0.5,  0.5, -1.0,  0.0,  0.0,
+
+    // right
+     0.5,  0.5,  0.5,  1.0,  0.0,  0.0,
+     0.5, -0.5, -0.5,  1.0,  0.0,  0.0,
+     0.5,  0.5, -0.5,  1.0,  0.0,  0.0,
+     0.5, -0.5, -0.5,  1.0,  0.0,  0.0,
+     0.5,  0.5,  0.5,  1.0,  0.0,  0.0,
+     0.5, -0.5,  0.5,  1.0,  0.0,  0.0,
+
+    // bottom
+    -0.5, -0.5, -0.5,  0.0, -1.0,  0.0,
+     0.5, -0.5, -0.5,  0.0, -1.0,  0.0,
+     0.5, -0.5,  0.5,  0.0, -1.0,  0.0,
+     0.5, -0.5,  0.5,  0.0, -1.0,  0.0,
+    -0.5, -0.5,  0.5,  0.0, -1.0,  0.0,
+    -0.5, -0.5, -0.5,  0.0, -1.0,  0.0,
+
+    // top
+    -0.5,  0.5, -0.5,  0.0,  1.0,  0.0,
+     0.5,  0.5,  0.5,  0.0,  1.0,  0.0,
+     0.5,  0.5, -0.5,  0.0,  1.0,  0.0,
+     0.5,  0.5,  0.5,  0.0,  1.0,  0.0,
+    -0.5,  0.5, -0.5,  0.0,  1.0,  0.0,
+    -0.5,  0.5,  0.5,  0.0,  1.0,  0.0
+];
+
 vertexAttributes : [2] VertexAttribute : .[
     .{3},   // position
     //.{3},   // color
@@ -141,6 +191,11 @@ screenVertexAttributes : [2] VertexAttribute : .[
 ];
 
 skyboxVertexAttributes : [1] VertexAttribute : .[
+    .{3}
+];
+
+cuboidVertexAttributes : [2] VertexAttribute : .[
+    .{3},
     .{3}
 ];
 
@@ -218,7 +273,8 @@ uniform mat4 view;
 
 void main() {
     TexCoords = aPos;
-    gl_Position = projection * view * vec4(aPos, 1.0);
+    vec4 pos = projection * view * vec4(aPos, 1.0);
+    gl_Position = pos.xyww;
 }
 DONE
 
@@ -232,6 +288,42 @@ uniform samplerCube skybox;
 
 void main() {
     FragColor = texture(skybox, TexCoords);
+}
+DONE
+
+MIRROR_VERTEX_SHADER :: #string DONE
+#version 330 core
+layout (location = 0) in vec3 aPos;
+layout (location = 1) in vec3 aNormal;
+
+out vec3 Normal;
+out vec3 Position;
+
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+
+void main() {
+    Normal = mat3(transpose(inverse(model))) * aNormal; // normal matrix
+    Position = vec3(model * vec4(aPos, 1.0));
+    gl_Position = projection * view * vec4(Position, 1.0);
+}
+DONE
+
+MIRROR_FRAGMENT_SHADER :: #string DONE
+#version 330 core
+out vec4 FragColor;
+
+in vec3 Normal;
+in vec3 Position;
+
+uniform vec3 camera_pos;
+uniform samplerCube skybox;
+
+void main () {
+    vec3 I = normalize(Position - camera_pos);
+    vec3 R = reflect(I, normalize(Normal));
+    FragColor = vec4(texture(skybox, R).rgb, 1.0);
 }
 DONE
 
@@ -260,6 +352,9 @@ main :: () {
     cube_mesh := CreateMesh("cube", .{ cubeVertices, vertexAttributes },
         material = CreateMaterial("cube_mat", "textures/marble.jpg"));
     defer FreeMesh(*cube_mesh);
+    
+    cuboid_mesh := CreateMesh("cuboid", .{ cuboidVertices, cuboidVertexAttributes });
+    defer FreeMesh(*cuboid_mesh);
 
     grass_mesh := CreateMesh("grass", .{ grassVertices, vertexAttributes },
         material = CreateMaterial("grass_mat", "textures/blending_transparent_window.png"));
@@ -323,6 +418,9 @@ main :: () {
     skybox := CreateCubemap(*skybox_faces);
     skybox_vao, _ := CreateVertexObjects(.{skyboxVertices, skyboxVertexAttributes});
     skybox_shader := CreateShader(SKYBOX_VERTEX_SHADER, SKYBOX_FRAGMENT_SHADER);
+    ShaderSetInt(skybox_shader, "skybox", 0);
+
+    mirror_shader := CreateShader(MIRROR_VERTEX_SHADER, MIRROR_FRAGMENT_SHADER);
 
     // main loop
     exit := false;
@@ -364,6 +462,35 @@ main :: () {
         ShaderSetMat4(shader, "model", *model);
         DrawMesh(plane_mesh, shader);
 
+        // mirror cuboid
+        model = Matrix4_Identity;
+        translate(*model, .{-10.0, 0.0, 10.0});
+        glUseProgram(mirror_shader);
+        ShaderSetMat4(mirror_shader, "model", *model);
+        ShaderSetMat4(mirror_shader, "view", *view);
+        ShaderSetMat4(mirror_shader, "projection", *projection);
+        ShaderSetVec3(mirror_shader, "camera_pos", *(camera.position));
+        DrawMesh(cuboid_mesh, mirror_shader);
+
+        // draw skybox last
+        glDepthFunc(GL_LEQUAL);
+        glUseProgram(skybox_shader);
+        skybox_view := view;
+        for 0..2 {
+            using skybox_view;
+            coef[it][3] = 0.0;
+            coef[3][it] = 0.0;
+        }
+
+        ShaderSetMat4(skybox_shader, "view", *skybox_view);
+        ShaderSetMat4(skybox_shader, "projection", *projection);
+        glBindVertexArray(skybox_vao);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, skybox.id); // DrawCubemap()
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        glBindVertexArray(0);
+        glDepthFunc(GL_LESS);
+
         // blendable objects
         grass_positions : [5] Vector3 : .[
             .{ -1.5,  0.0, -0.48 },
@@ -373,6 +500,10 @@ main :: () {
             .{  0.5,  0.0, -0.60 }
         ];
         grass_yaws : [5] float = .[ 0.0, 0.0, 0.0, 0.0, 0.0 ];
+
+        glUseProgram(shader);
+        ShaderSetMat4(shader, "view", *view);
+        ShaderSetMat4(shader, "projection", *projection);
 
         // sort
         array_reset(*blendable_objects);
@@ -396,24 +527,6 @@ main :: () {
             ShaderSetMat4(shader, "model", *model);
             DrawMesh(grass_mesh, shader);
         }
-
-        // draw skybox last
-        glDepthFunc(GL_LEQUAL);
-        glUseProgram(skybox_shader);
-        skybox_view := view;
-        for 0..3 {
-            using skybox_view;
-            coef[it][3] = 0.0;
-            coef[3][it] = 0.0;
-        }
-        ShaderSetMat4(skybox_shader, "view", *skybox_view);
-        ShaderSetMat4(skybox_shader, "projection", *projection);
-        glBindVertexArray(skybox_vao);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, skybox.id); // DrawCubemap()
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-        glBindVertexArray(0);
-        glDepthFunc(GL_LESS);
 
         // set up second render pass
         glBindFramebuffer(GL_FRAMEBUFFER, 0);

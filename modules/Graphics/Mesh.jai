@@ -48,7 +48,7 @@ DrawMesh :: (using mesh : *Mesh, shader : u32) {
     glBindVertexArray(VAO);
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, material.diffuse_texture.id);
+    if material glBindTexture(GL_TEXTURE_2D, material.diffuse_texture.id);
     ShaderSetInt(shader, "diffuse", 0);
 
     if mesh.drawType == {
