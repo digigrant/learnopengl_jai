@@ -355,6 +355,8 @@ main :: () {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_CULL_FACE);  // cull back faces
 
+    print("hehe: %\n", GL_MAX_VERTEX_UNIFORM_COMPONENTS);
+
     shader := CreateShader(VERTEX_SHADER, FRAGMENT_SHADER);
     // shader isnt actually allocated or else we would have to free it
     glUniformBlockBinding(shader, glGetUniformBlockIndex(shader, "Matrices"), 0);
