@@ -5,7 +5,7 @@
 MAX_INFO_LOG_LENGTH :: 512;
 
 // Compiles shaders and creates shader program
-CreateShader :: (vertexShaderCode : string, fragmentShaderCode : string) -> shaderId : u32 {
+CreateShader :: (vertexShaderCode : string, fragmentShaderCode : string, geometryShaderCode : string = "") -> shaderId : u32 {
     success : s32;
     infoLog : string;
 
@@ -21,6 +21,18 @@ CreateShader :: (vertexShaderCode : string, fragmentShaderCode : string) -> shad
         print("ERROR::SHADER::VERTEX::COMPILATION_FAILED\n%\n", infoLog);
     }
 
+    geometryShader : GLuint;
+    if geometryShaderCode != "" {
+        geometryShader = glCreateShader(GL_GEOMETRY_SHADER);
+        glShaderSource(geometryShader, 1, *(to_c_string(geometryShaderCode)), null);
+        glCompileShader(geometryShader);
+        glGetShaderiv(geometryShader, GL_COMPILE_STATUS, *success);
+        if !success {
+            glGetShaderInfoLog(geometryShader, MAX_INFO_LOG_LENGTH, null, to_c_string(infoLog));
+            print("ERROR::SHADER::GEOMETRY::COMPILATION_FAILED\n%\n", infoLog);
+        }
+    }
+
     fragmentShader := glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(fragmentShader, 1, *(to_c_string(fragmentShaderCode)), null);
     glCompileShader(fragmentShader);
@@ -32,6 +44,7 @@ CreateShader :: (vertexShaderCode : string, fragmentShaderCode : string) -> shad
 
     shader := glCreateProgram();
     glAttachShader(shader, vertexShader);
+    if geometryShaderCode != "" glAttachShader(shader, geometryShader);
     glAttachShader(shader, fragmentShader);
     glLinkProgram(shader);
     glGetProgramiv(shader, GL_LINK_STATUS, *success);
@@ -42,6 +55,7 @@ CreateShader :: (vertexShaderCode : string, fragmentShaderCode : string) -> shad
 
     // cleanup
     glDeleteShader(vertexShader);
+    glDeleteShader(geometryShader);
     glDeleteShader(fragmentShader);
 
     // right now we just return the raw u32.
