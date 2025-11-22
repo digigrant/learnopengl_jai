@@ -202,20 +202,20 @@ cuboidVertexAttributes : [2] VertexAttribute : .[
 VERTEX_SHADER :: #string DONE
 #version 330 core
 layout (location = 0) in vec3 aPos;
-//layout (location = 1) in vec3 aColor;
 layout (location = 1) in vec2 aTexCoord;
 
+layout (std140) uniform Matrices {
+    mat4 projection;
+    mat4 view;
+};
+
 uniform mat4 model;
-uniform mat4 view;
-uniform mat4 projection;
 
 out vec3 myColor;
 out vec2 TexCoord;
 
 void main() {
     gl_Position = projection * view * model * vec4(aPos, 1.0f);
-    //gl_Position = vec4(aPos, 1.0);
-    //myColor = aColor;
     TexCoord = aTexCoord;
 }
 DONE
@@ -357,6 +357,7 @@ main :: () {
 
     shader := CreateShader(VERTEX_SHADER, FRAGMENT_SHADER);
     // shader isnt actually allocated or else we would have to free it
+    glUniformBlockBinding(shader, glGetUniformBlockIndex(shader, "Matrices"), 0);
 
     texture := BuildFromTextureLibrary("textures/container.jpg", .DIFFUSE);
     // freed by texture library later
@@ -436,10 +437,19 @@ main :: () {
     skybox := CreateCubemap(*skybox_faces);
     skybox_vao, _ := CreateVertexObjects(.{skyboxVertices, skyboxVertexAttributes});
     skybox_shader := CreateShader(SKYBOX_VERTEX_SHADER, SKYBOX_FRAGMENT_SHADER);
+    glUseProgram(skybox_shader);
     ShaderSetInt(skybox_shader, "skybox", 0);
 
     mirror_shader := CreateShader(MIRROR_VERTEX_SHADER, MIRROR_FRAGMENT_SHADER);
     glass_shader := CreateShader(MIRROR_VERTEX_SHADER, GLASS_FRAGMENT_SHADER);
+
+    // create uniform buffer for matrices
+    UBO_Matrices : GLuint;
+    glGenBuffers(1, *UBO_Matrices);
+    glBindBuffer(GL_UNIFORM_BUFFER, UBO_Matrices);
+    glBufferData(GL_UNIFORM_BUFFER, 2 * size_of(Matrix4), null, GL_STATIC_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    glBindBufferRange(GL_UNIFORM_BUFFER, 0, UBO_Matrices, 0, 2 * size_of(Matrix4));
 
     // main loop
     exit := false;
@@ -458,10 +468,17 @@ main :: () {
 
         view := CameraGetViewMatrix(camera);
         projection := make_projection_matrix(DegToRad(camera.fov), GetWindowWidth().(float)/GetWindowHeight(), 0.1, 100.0);
+        // normally these get transposed when being fed into shader.
+        // since we are not doing that anymore, we need to transpose them before
+        // feeding them to uniform buffer. (Ugly!!)
+        transposed_view := transpose(view);
+        transposed_proj := transpose(projection);
+        glBindBuffer(GL_UNIFORM_BUFFER, UBO_Matrices);
+        glBufferSubData(GL_UNIFORM_BUFFER, 0, size_of(Matrix4), *transposed_proj);
+        glBufferSubData(GL_UNIFORM_BUFFER, size_of(Matrix4), size_of(Matrix4), *transposed_view);
+        glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
         glUseProgram(shader);
-        ShaderSetMat4(shader, "view", *view);
-        ShaderSetMat4(shader, "projection", *projection);
 
         // cube 1
         model := Matrix4_Identity;
