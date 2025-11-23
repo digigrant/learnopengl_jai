@@ -345,6 +345,77 @@ void main () {
 }
 DONE
 
+EXPLODE_VERTEX_SHADER :: #string DONE
+#version 330 core
+layout (location = 0) in vec3 aPos;
+layout (location = 2) in vec2 aTexCoord;
+
+out VS_OUT {
+    vec2 tex_coord;
+} vs_out;
+
+uniform mat4 projection;
+uniform mat4 view;
+uniform mat4 model;
+
+void main() {
+    vs_out.tex_coord = aTexCoord;
+    gl_Position = projection * view * model * vec4(aPos, 1.0);
+}
+DONE
+
+EXPLODE_GEOMETRY_SHADER :: #string DONE
+#version 330 core
+layout (triangles) in;
+layout (triangle_strip, max_vertices = 3) out;
+
+in VS_OUT {
+    vec2 tex_coord;
+} gs_in[];
+
+out vec2 gs_tex_coord;
+
+uniform float time;
+
+vec4 ExplodeVertex(vec4 position, vec3 normal) {
+    float magnitude = 2.0;
+    vec3 direction = normal * ((sin(time) + 1.0) / 2.0) * magnitude;
+    return position + vec4(direction, 0.0);
+}
+
+void main() {
+    // get normal vector
+    vec3 a = vec3(gl_in[0].gl_Position) - vec3(gl_in[1].gl_Position);
+    vec3 b = vec3(gl_in[2].gl_Position) - vec3(gl_in[1].gl_Position);
+    vec3 normal = normalize(cross(a, b));
+
+    gl_Position = ExplodeVertex(gl_in[0].gl_Position, normal);
+    gs_tex_coord = gs_in[0].tex_coord;
+    EmitVertex();
+    gl_Position = ExplodeVertex(gl_in[1].gl_Position, normal);
+    gs_tex_coord = gs_in[1].tex_coord;
+    EmitVertex();
+    gl_Position = ExplodeVertex(gl_in[2].gl_Position, normal);
+    gs_tex_coord = gs_in[2].tex_coord;
+    EmitVertex();
+
+    EndPrimitive();
+}
+DONE
+
+EXPLODE_FRAGMENT_SHADER :: #string DONE
+#version 330 core
+out vec4 FragColor;
+
+in vec2 gs_tex_coord;
+
+uniform sampler2D diffuse;
+
+void main() {
+    FragColor = texture(diffuse, gs_tex_coord);
+}
+DONE
+
 main :: () {
     InitAllSystems();
 
@@ -354,8 +425,6 @@ main :: () {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_CULL_FACE);  // cull back faces
-
-    print("hehe: %\n", GL_MAX_VERTEX_UNIFORM_COMPONENTS);
 
     shader := CreateShader(VERTEX_SHADER, FRAGMENT_SHADER);
     // shader isnt actually allocated or else we would have to free it
@@ -373,9 +442,6 @@ main :: () {
     cube_mesh := CreateMesh("cube", .{ cubeVertices, vertexAttributes },
         material = CreateMaterial("cube_mat", "textures/marble.jpg"));
     defer FreeMesh(*cube_mesh);
-    
-    cuboid_mesh := CreateMesh("cuboid", .{ cuboidVertices, cuboidVertexAttributes });
-    defer FreeMesh(*cuboid_mesh);
 
     grass_mesh := CreateMesh("grass", .{ grassVertices, vertexAttributes },
         material = CreateMaterial("grass_mat", "textures/blending_transparent_window.png"));
@@ -444,6 +510,7 @@ main :: () {
 
     mirror_shader := CreateShader(MIRROR_VERTEX_SHADER, MIRROR_FRAGMENT_SHADER);
     glass_shader := CreateShader(MIRROR_VERTEX_SHADER, GLASS_FRAGMENT_SHADER);
+    explode_shader := CreateShader(EXPLODE_VERTEX_SHADER, EXPLODE_FRAGMENT_SHADER, EXPLODE_GEOMETRY_SHADER);
 
     // create uniform buffer for matrices
     UBO_Matrices : GLuint;
@@ -498,7 +565,7 @@ main :: () {
         ShaderSetMat4(shader, "model", *model);
         DrawMesh(plane_mesh, shader);
 
-        // mirror cuboid
+        // mirror backpack
         glUseProgram(mirror_shader);
         model = Matrix4_Identity;
         translate(*model, .{-10.0, 0.0, 10.0});
@@ -506,17 +573,27 @@ main :: () {
         ShaderSetMat4(mirror_shader, "view", *view);
         ShaderSetMat4(mirror_shader, "projection", *projection);
         ShaderSetVec3(mirror_shader, "camera_pos", *(camera.position));
-        DrawMesh(cuboid_mesh, mirror_shader);
+        DrawModel(backpack, mirror_shader);
 
         // glass backpack
         glUseProgram(glass_shader);
         model = Matrix4_Identity;
-        translate(*model, .{10.0, 0.0, 10.0});
+        translate(*model, .{0.0, 0.0, 10.0});
         ShaderSetMat4(glass_shader, "model", *model);
         ShaderSetMat4(glass_shader, "view", *view);
         ShaderSetMat4(glass_shader, "projection", *projection);
         ShaderSetVec3(glass_shader, "camera_pos", *(camera.position));
         DrawModel(backpack, glass_shader);
+
+        // exploding backpack
+        glUseProgram(explode_shader);
+        model = Matrix4_Identity;
+        translate(*model, .{10.0, 0.0, 10.0});
+        ShaderSetMat4(explode_shader, "model", *model);
+        ShaderSetMat4(explode_shader, "view", *view);
+        ShaderSetMat4(explode_shader, "projection", *projection);
+        ShaderSetFloat(explode_shader, "time", currTimeSeconds);
+        DrawModel(backpack, explode_shader);
 
         // draw skybox last
         glDepthFunc(GL_LEQUAL);
