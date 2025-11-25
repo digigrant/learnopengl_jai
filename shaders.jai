@@ -81,8 +81,11 @@ out vec3 Normal;
 out vec3 Position;
 
 uniform mat4 model;
-uniform mat4 view;
-uniform mat4 projection;
+
+layout (std140) uniform Matrices {
+    mat4 projection;
+    mat4 view;
+};
 
 void main() {
     Normal = mat3(transpose(inverse(model))) * aNormal; // normal matrix
@@ -135,8 +138,11 @@ out VS_OUT {
     vec2 tex_coord;
 } vs_out;
 
-uniform mat4 projection;
-uniform mat4 view;
+layout (std140) uniform Matrices {
+    mat4 projection;
+    mat4 view;
+};
+
 uniform mat4 model;
 
 void main() {

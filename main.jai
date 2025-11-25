@@ -126,8 +126,6 @@ main :: () {
         model = Matrix4_Identity;
         translate(*model, .{-10.0, 0.0, 10.0});
         ShaderSetMat4(mirror_shader, "model", *model);
-        ShaderSetMat4(mirror_shader, "view", *view);
-        ShaderSetMat4(mirror_shader, "projection", *projection);
         ShaderSetVec3(mirror_shader, "camera_pos", *(camera.position));
         DrawModel(backpack, mirror_shader);
 
@@ -136,8 +134,6 @@ main :: () {
         model = Matrix4_Identity;
         translate(*model, .{0.0, 0.0, 10.0});
         ShaderSetMat4(glass_shader, "model", *model);
-        ShaderSetMat4(glass_shader, "view", *view);
-        ShaderSetMat4(glass_shader, "projection", *projection);
         ShaderSetVec3(glass_shader, "camera_pos", *(camera.position));
         DrawModel(backpack, glass_shader);
 
@@ -146,8 +142,6 @@ main :: () {
         model = Matrix4_Identity;
         translate(*model, .{10.0, 0.0, 10.0});
         ShaderSetMat4(explode_shader, "model", *model);
-        ShaderSetMat4(explode_shader, "view", *view);
-        ShaderSetMat4(explode_shader, "projection", *projection);
         ShaderSetFloat(explode_shader, "time", currTimeSeconds);
         DrawModel(backpack, explode_shader);
 
@@ -181,8 +175,6 @@ main :: () {
         grass_yaws : [5] float = .[ 0.0, 0.0, 0.0, 0.0, 0.0 ];
 
         glUseProgram(shader);
-        ShaderSetMat4(shader, "view", *view);
-        ShaderSetMat4(shader, "projection", *projection);
 
         // sort
         array_reset(*blendable_objects);
