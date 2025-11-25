@@ -2,12 +2,12 @@
 #import "GL";
 #import "Math";
 
-MAX_INFO_LOG_LENGTH :: 512;
+STRING_BUFFER_LENGTH :: 512;
 
 // Compiles shaders and creates shader program
 CreateShader :: (vertexShaderCode : string, fragmentShaderCode : string, geometryShaderCode : string = "") -> shaderId : u32 {
     success : s32;
-    infoLog : string;
+    string_buffer := alloc_string(STRING_BUFFER_LENGTH,, temp);
 
     vertexShader := glCreateShader(GL_VERTEX_SHADER);
     // glShaderSource takes an array of strings and an array of string lengths
@@ -17,8 +17,8 @@ CreateShader :: (vertexShaderCode : string, fragmentShaderCode : string, geometr
     glCompileShader(vertexShader);
     glGetShaderiv(vertexShader, GL_COMPILE_STATUS, *success);
     if !success {
-        glGetShaderInfoLog(vertexShader, MAX_INFO_LOG_LENGTH, null, to_c_string(infoLog));
-        print("ERROR::SHADER::VERTEX::COMPILATION_FAILED\n%\n", infoLog);
+        glGetShaderInfoLog(vertexShader, STRING_BUFFER_LENGTH, null, string_buffer.data);
+        print("ERROR::SHADER::VERTEX::COMPILATION_FAILED\n%\n", string_buffer);
     }
 
     geometryShader : GLuint;
@@ -28,8 +28,8 @@ CreateShader :: (vertexShaderCode : string, fragmentShaderCode : string, geometr
         glCompileShader(geometryShader);
         glGetShaderiv(geometryShader, GL_COMPILE_STATUS, *success);
         if !success {
-            glGetShaderInfoLog(geometryShader, MAX_INFO_LOG_LENGTH, null, to_c_string(infoLog));
-            print("ERROR::SHADER::GEOMETRY::COMPILATION_FAILED\n%\n", infoLog);
+            glGetShaderInfoLog(geometryShader, STRING_BUFFER_LENGTH, null, string_buffer.data);
+            print("ERROR::SHADER::GEOMETRY::COMPILATION_FAILED\n%\n", string_buffer);
         }
     }
 
@@ -38,8 +38,8 @@ CreateShader :: (vertexShaderCode : string, fragmentShaderCode : string, geometr
     glCompileShader(fragmentShader);
     glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, *success);
     if !success {
-        glGetShaderInfoLog(fragmentShader, MAX_INFO_LOG_LENGTH, null, to_c_string(infoLog));
-        print("ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n%\n", infoLog);
+        glGetShaderInfoLog(fragmentShader, STRING_BUFFER_LENGTH, null, string_buffer.data);
+        print("ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n%\n", string_buffer);
     }
 
     shader := glCreateProgram();
@@ -49,8 +49,22 @@ CreateShader :: (vertexShaderCode : string, fragmentShaderCode : string, geometr
     glLinkProgram(shader);
     glGetProgramiv(shader, GL_LINK_STATUS, *success);
     if !success {
-        glGetProgramInfoLog(shader, 512, null, to_c_string(infoLog));
-        print("ERROR::SHADER::PROGRAM::LINKING_FAILED\n%\n", infoLog);
+        glGetProgramInfoLog(shader, STRING_BUFFER_LENGTH, null, string_buffer.data);
+        print("ERROR::SHADER::PROGRAM::LINKING_FAILED\n%\n", string_buffer);
+    }
+
+    // set any uniform buffer bindings
+    // @TODO: upgrade OpenGL to 4.3+ and use GetProgramResource instead
+    block_count: GLint;
+    glGetProgramiv(shader, GL_ACTIVE_UNIFORM_BLOCKS, *block_count);
+    for 0..block_count-1 {
+        glGetActiveUniformBlockName(shader, xx it, STRING_BUFFER_LENGTH, null, string_buffer.data);
+        binding := LookupUniformBufferBinding(to_string(xx string_buffer));
+        if binding > -1 {
+            glUniformBlockBinding(shader, xx it, binding.(u32));
+        } else {
+            print("Uniform block '%' could not be bound because it was not found in the registry.\n", string_buffer);
+        }
     }
 
     // cleanup

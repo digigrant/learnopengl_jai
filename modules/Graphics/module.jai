@@ -7,6 +7,7 @@
 #load "Shader.jai";
 #load "Texture.jai";
 #load "TextureLibrary.jai";
+#load "UniformBufferRegistry.jai";
 #load "VertexObjects.jai";
 
 #import "SDL";
@@ -54,8 +55,9 @@ Init :: () -> ok : bool {
     gl_load(*gl, SDL_GL_GetProcAddress);
     // we should check that it was initialized correctly.... but i dont know how
 
-    InitTextureLibrary();
     InitFrameBuffer();
+    InitTextureLibrary();
+    InitUniformBufferRegistry();
 
     return true;
 }

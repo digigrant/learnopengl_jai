@@ -11,6 +11,7 @@ using,except (Init, Shutdown) Input :: #import "Input";
 #load "vertex_data.jai";
 
 main :: () {
+    /* renderer initialization */
     InitAllSystems();
 
     // enable gl systems
@@ -20,9 +21,10 @@ main :: () {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_CULL_FACE);  // cull back faces
 
+    /* set up scene */
+
     shader := CreateShader(VERTEX_SHADER, FRAGMENT_SHADER);
     // shader isnt actually allocated or else we would have to free it
-    glUniformBlockBinding(shader, glGetUniformBlockIndex(shader, "Matrices"), 0);
 
     //texture := BuildFromTextureLibrary("textures/container.jpg", .DIFFUSE);
     // freed by texture library later
@@ -78,14 +80,6 @@ main :: () {
     glass_shader := CreateShader(MIRROR_VERTEX_SHADER, GLASS_FRAGMENT_SHADER);
     explode_shader := CreateShader(EXPLODE_VERTEX_SHADER, EXPLODE_FRAGMENT_SHADER, EXPLODE_GEOMETRY_SHADER);
 
-    // create uniform buffer for matrices
-    UBO_Matrices : GLuint;
-    glGenBuffers(1, *UBO_Matrices);
-    glBindBuffer(GL_UNIFORM_BUFFER, UBO_Matrices);
-    glBufferData(GL_UNIFORM_BUFFER, 2 * size_of(Matrix4), null, GL_STATIC_DRAW);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
-    glBindBufferRange(GL_UNIFORM_BUFFER, 0, UBO_Matrices, 0, 2 * size_of(Matrix4));
-
     // main loop
     exit := false;
     while !exit {
@@ -104,10 +98,10 @@ main :: () {
         // feeding them to uniform buffer. (Ugly!!)
         transposed_view := transpose(view);
         transposed_proj := transpose(projection);
-        glBindBuffer(GL_UNIFORM_BUFFER, UBO_Matrices);
-        glBufferSubData(GL_UNIFORM_BUFFER, 0, size_of(Matrix4), *transposed_proj);
-        glBufferSubData(GL_UNIFORM_BUFFER, size_of(Matrix4), size_of(Matrix4), *transposed_view);
-        glBindBuffer(GL_UNIFORM_BUFFER, 0);
+        heehoo_matrices : [2] Matrix4 = .[transposed_proj, transposed_view];
+
+        // @TODO: improve this by not using a string compare - just use an enum
+        SetUniformBufferData("Matrices", size_of(Matrix4) * 2, heehoo_matrices.data);
 
         glUseProgram(shader);
 
