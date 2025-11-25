@@ -1,5 +1,6 @@
 #load "Camera.jai";
 #load "Cubemap.jai";
+#load "FrameBuffer.jai";
 #load "Material.jai";
 #load "Mesh.jai";
 #load "Model.jai";
@@ -54,6 +55,7 @@ Init :: () -> ok : bool {
     // we should check that it was initialized correctly.... but i dont know how
 
     InitTextureLibrary();
+    InitFrameBuffer();
 
     return true;
 }

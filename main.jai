@@ -7,414 +7,8 @@
 using,except (Init, Shutdown) Graphics :: #import "Graphics";
 using,except (Init, Shutdown) Input :: #import "Input";
 
-cubeVertices : [180] float : .[
-    // Back face
-    -0.5, -0.5, -0.5,  0.0, 0.0, // Bottom-left
-     0.5,  0.5, -0.5,  1.0, 1.0, // top-right
-     0.5, -0.5, -0.5,  1.0, 0.0, // bottom-right         
-     0.5,  0.5, -0.5,  1.0, 1.0, // top-right
-    -0.5, -0.5, -0.5,  0.0, 0.0, // bottom-left
-    -0.5,  0.5, -0.5,  0.0, 1.0, // top-left
-    // Front face
-    -0.5, -0.5,  0.5,  0.0, 0.0, // bottom-left
-     0.5, -0.5,  0.5,  1.0, 0.0, // bottom-right
-     0.5,  0.5,  0.5,  1.0, 1.0, // top-right
-     0.5,  0.5,  0.5,  1.0, 1.0, // top-right
-    -0.5,  0.5,  0.5,  0.0, 1.0, // top-left
-    -0.5, -0.5,  0.5,  0.0, 0.0, // bottom-left
-    // Left face
-    -0.5,  0.5,  0.5,  1.0, 0.0, // top-right
-    -0.5,  0.5, -0.5,  1.0, 1.0, // top-left
-    -0.5, -0.5, -0.5,  0.0, 1.0, // bottom-left
-    -0.5, -0.5, -0.5,  0.0, 1.0, // bottom-left
-    -0.5, -0.5,  0.5,  0.0, 0.0, // bottom-right
-    -0.5,  0.5,  0.5,  1.0, 0.0, // top-right
-    // Right face
-     0.5,  0.5,  0.5,  1.0, 0.0, // top-left
-     0.5, -0.5, -0.5,  0.0, 1.0, // bottom-right
-     0.5,  0.5, -0.5,  1.0, 1.0, // top-right         
-     0.5, -0.5, -0.5,  0.0, 1.0, // bottom-right
-     0.5,  0.5,  0.5,  1.0, 0.0, // top-left
-     0.5, -0.5,  0.5,  0.0, 0.0, // bottom-left     
-    // Bottom face
-    -0.5, -0.5, -0.5,  0.0, 1.0, // top-right
-     0.5, -0.5, -0.5,  1.0, 1.0, // top-left
-     0.5, -0.5,  0.5,  1.0, 0.0, // bottom-left
-     0.5, -0.5,  0.5,  1.0, 0.0, // bottom-left
-    -0.5, -0.5,  0.5,  0.0, 0.0, // bottom-right
-    -0.5, -0.5, -0.5,  0.0, 1.0, // top-right
-    // Top face
-    -0.5,  0.5, -0.5,  0.0, 1.0, // top-left
-     0.5,  0.5,  0.5,  1.0, 0.0, // bottom-right
-     0.5,  0.5, -0.5,  1.0, 1.0, // top-right     
-     0.5,  0.5,  0.5,  1.0, 0.0, // bottom-right
-    -0.5,  0.5, -0.5,  0.0, 1.0, // top-left
-    -0.5,  0.5,  0.5,  0.0, 0.0  // bottom-left        
-];
-
-grassVertices : [30] float : .[
-    // positions          // texture Coords (note we set these higher than 1 (together with GL_REPEAT as texture wrapping mode). this will cause the floor texture to repeat)
-    -0.5, -0.5,  0.0,    0.0, 0.0,
-     0.5,  0.5,  0.0,    1.0, 1.0,
-    -0.5,  0.5,  0.0,    0.0, 1.0,
-
-    -0.5, -0.5,  0.0,    0.0, 0.0,
-     0.5, -0.5,  0.0,    1.0, 0.0,
-     0.5,  0.5,  0.0,    1.0, 1.0								
-];
-
-planeVertices : [30] float : .[
-    // positions          // texture Coords (note we set these higher than 1 (together with GL_REPEAT as texture wrapping mode). this will cause the floor texture to repeat)
-     5.0, -0.5,  5.0,  2.0, 0.0,
-    -5.0, -0.5, -5.0,  0.0, 2.0,
-    -5.0, -0.5,  5.0,  0.0, 0.0,
-
-     5.0, -0.5,  5.0,  2.0, 0.0,
-     5.0, -0.5, -5.0,  2.0, 2.0,
-    -5.0, -0.5, -5.0,  0.0, 2.0						
-];
-
-screenVertices : [24] float : .[
-    -1.0, -1.0, 0.0, 0.0,
-     1.0,  1.0, 1.0, 1.0,
-    -1.0,  1.0, 0.0, 1.0,
-
-    -1.0, -1.0, 0.0, 0.0,
-     1.0, -1.0, 1.0, 0.0,
-     1.0,  1.0, 1.0, 1.0,
-];
-
-skyboxVertices : [108] float : .[
-    // positions          
-    -1.0,  1.0, -1.0,
-    -1.0, -1.0, -1.0,
-     1.0, -1.0, -1.0,
-     1.0, -1.0, -1.0,
-     1.0,  1.0, -1.0,
-    -1.0,  1.0, -1.0,
-
-    -1.0, -1.0,  1.0,
-    -1.0, -1.0, -1.0,
-    -1.0,  1.0, -1.0,
-    -1.0,  1.0, -1.0,
-    -1.0,  1.0,  1.0,
-    -1.0, -1.0,  1.0,
-
-     1.0, -1.0, -1.0,
-     1.0, -1.0,  1.0,
-     1.0,  1.0,  1.0,
-     1.0,  1.0,  1.0,
-     1.0,  1.0, -1.0,
-     1.0, -1.0, -1.0,
-
-    -1.0, -1.0,  1.0,
-    -1.0,  1.0,  1.0,
-     1.0,  1.0,  1.0,
-     1.0,  1.0,  1.0,
-     1.0, -1.0,  1.0,
-    -1.0, -1.0,  1.0,
-
-    -1.0,  1.0, -1.0,
-     1.0,  1.0, -1.0,
-     1.0,  1.0,  1.0,
-     1.0,  1.0,  1.0,
-    -1.0,  1.0,  1.0,
-    -1.0,  1.0, -1.0,
-
-    -1.0, -1.0, -1.0,
-    -1.0, -1.0,  1.0,
-     1.0, -1.0, -1.0,
-     1.0, -1.0, -1.0,
-    -1.0, -1.0,  1.0,
-     1.0, -1.0,  1.0
-];
-
-cuboidVertices : [216] float : .[
-    // back
-    -0.5, -0.5, -0.5,  0.0,  0.0, -1.0,
-     0.5,  0.5, -0.5,  0.0,  0.0, -1.0,
-     0.5, -0.5, -0.5,  0.0,  0.0, -1.0, 
-     0.5,  0.5, -0.5,  0.0,  0.0, -1.0, 
-    -0.5, -0.5, -0.5,  0.0,  0.0, -1.0, 
-    -0.5,  0.5, -0.5,  0.0,  0.0, -1.0,
-
-    // front
-    -0.5, -0.5,  0.5,  0.0,  0.0,  1.0,
-     0.5, -0.5,  0.5,  0.0,  0.0,  1.0,
-     0.5,  0.5,  0.5,  0.0,  0.0,  1.0,
-     0.5,  0.5,  0.5,  0.0,  0.0,  1.0,
-    -0.5,  0.5,  0.5,  0.0,  0.0,  1.0,
-    -0.5, -0.5,  0.5,  0.0,  0.0,  1.0,
-
-    // left
-    -0.5,  0.5,  0.5, -1.0,  0.0,  0.0,
-    -0.5,  0.5, -0.5, -1.0,  0.0,  0.0,
-    -0.5, -0.5, -0.5, -1.0,  0.0,  0.0,
-    -0.5, -0.5, -0.5, -1.0,  0.0,  0.0,
-    -0.5, -0.5,  0.5, -1.0,  0.0,  0.0,
-    -0.5,  0.5,  0.5, -1.0,  0.0,  0.0,
-
-    // right
-     0.5,  0.5,  0.5,  1.0,  0.0,  0.0,
-     0.5, -0.5, -0.5,  1.0,  0.0,  0.0,
-     0.5,  0.5, -0.5,  1.0,  0.0,  0.0,
-     0.5, -0.5, -0.5,  1.0,  0.0,  0.0,
-     0.5,  0.5,  0.5,  1.0,  0.0,  0.0,
-     0.5, -0.5,  0.5,  1.0,  0.0,  0.0,
-
-    // bottom
-    -0.5, -0.5, -0.5,  0.0, -1.0,  0.0,
-     0.5, -0.5, -0.5,  0.0, -1.0,  0.0,
-     0.5, -0.5,  0.5,  0.0, -1.0,  0.0,
-     0.5, -0.5,  0.5,  0.0, -1.0,  0.0,
-    -0.5, -0.5,  0.5,  0.0, -1.0,  0.0,
-    -0.5, -0.5, -0.5,  0.0, -1.0,  0.0,
-
-    // top
-    -0.5,  0.5, -0.5,  0.0,  1.0,  0.0,
-     0.5,  0.5,  0.5,  0.0,  1.0,  0.0,
-     0.5,  0.5, -0.5,  0.0,  1.0,  0.0,
-     0.5,  0.5,  0.5,  0.0,  1.0,  0.0,
-    -0.5,  0.5, -0.5,  0.0,  1.0,  0.0,
-    -0.5,  0.5,  0.5,  0.0,  1.0,  0.0
-];
-
-vertexAttributes : [2] VertexAttribute : .[
-    .{3},   // position
-    //.{3},   // color
-    .{2},   // texcoords
-];
-
-screenVertexAttributes : [2] VertexAttribute : .[
-    .{2},
-    .{2}
-];
-
-skyboxVertexAttributes : [1] VertexAttribute : .[
-    .{3}
-];
-
-cuboidVertexAttributes : [2] VertexAttribute : .[
-    .{3},
-    .{3}
-];
-
-VERTEX_SHADER :: #string DONE
-#version 330 core
-layout (location = 0) in vec3 aPos;
-layout (location = 1) in vec2 aTexCoord;
-
-layout (std140) uniform Matrices {
-    mat4 projection;
-    mat4 view;
-};
-
-uniform mat4 model;
-
-out vec3 myColor;
-out vec2 TexCoord;
-
-void main() {
-    gl_Position = projection * view * model * vec4(aPos, 1.0f);
-    TexCoord = aTexCoord;
-}
-DONE
-
-FRAGMENT_SHADER :: #string DONE
-#version 330 core
-in vec3 myColor;
-in vec2 TexCoord;
-
-out vec4 FragColor;
-
-uniform sampler2D diffuse;
-
-void main() {
-
-    vec4 texColor = texture(diffuse, TexCoord);
-    if (texColor.a < 0.1) discard;
-    FragColor = texColor;
-}
-DONE
-
-SCREEN_VERTEX_SHADER :: #string DONE
-#version 330 core
-layout (location = 0) in vec2 aPos;
-layout (location = 1) in vec2 aTexCoords;
-
-out vec2 TexCoords;
-
-void main() {
-    gl_Position = vec4(aPos.x, aPos.y, 0.0, 1.0);
-    TexCoords = aTexCoords;
-}
-DONE
-
-SCREEN_FRAGMENT_SHADER :: #string DONE
-#version 330 core
-out vec4 FragColor;
-
-in vec2 TexCoords;
-uniform sampler2D screenTexture;
-
-void main() {
-    FragColor = texture(screenTexture, TexCoords);
-}
-DONE
-
-SKYBOX_VERTEX_SHADER :: #string DONE
-#version 330 core
-layout (location = 0) in vec3 aPos;
-
-out vec3 TexCoords;
-
-uniform mat4 projection;
-uniform mat4 view;
-
-void main() {
-    TexCoords = aPos;
-    vec4 pos = projection * view * vec4(aPos, 1.0);
-    gl_Position = pos.xyww;
-}
-DONE
-
-SKYBOX_FRAGMENT_SHADER :: #string DONE
-#version 330 core
-out vec4 FragColor;
-
-in vec3 TexCoords;
-
-uniform samplerCube skybox;
-
-void main() {
-    FragColor = texture(skybox, TexCoords);
-}
-DONE
-
-MIRROR_VERTEX_SHADER :: #string DONE
-#version 330 core
-layout (location = 0) in vec3 aPos;
-layout (location = 1) in vec3 aNormal;
-
-out vec3 Normal;
-out vec3 Position;
-
-uniform mat4 model;
-uniform mat4 view;
-uniform mat4 projection;
-
-void main() {
-    Normal = mat3(transpose(inverse(model))) * aNormal; // normal matrix
-    Position = vec3(model * vec4(aPos, 1.0));
-    gl_Position = projection * view * vec4(Position, 1.0);
-}
-DONE
-
-MIRROR_FRAGMENT_SHADER :: #string DONE
-#version 330 core
-out vec4 FragColor;
-
-in vec3 Normal;
-in vec3 Position;
-
-uniform vec3 camera_pos;
-uniform samplerCube skybox;
-
-void main () {
-    vec3 I = normalize(Position - camera_pos);
-    vec3 R = reflect(I, normalize(Normal));
-    FragColor = vec4(texture(skybox, R).rgb, 1.0);
-}
-DONE
-
-GLASS_FRAGMENT_SHADER :: #string DONE
-#version 330 core
-out vec4 FragColor;
-
-in vec3 Normal;
-in vec3 Position;
-
-uniform vec3 camera_pos;
-uniform samplerCube skybox;
-
-void main () {
-    float ratio = 1.00 / 1.52;
-    vec3 I = normalize(Position - camera_pos);
-    vec3 R = refract(I, normalize(Normal), ratio);
-    FragColor = vec4(texture(skybox, R).rgb, 1.0);
-}
-DONE
-
-EXPLODE_VERTEX_SHADER :: #string DONE
-#version 330 core
-layout (location = 0) in vec3 aPos;
-layout (location = 2) in vec2 aTexCoord;
-
-out VS_OUT {
-    vec2 tex_coord;
-} vs_out;
-
-uniform mat4 projection;
-uniform mat4 view;
-uniform mat4 model;
-
-void main() {
-    vs_out.tex_coord = aTexCoord;
-    gl_Position = projection * view * model * vec4(aPos, 1.0);
-}
-DONE
-
-EXPLODE_GEOMETRY_SHADER :: #string DONE
-#version 330 core
-layout (triangles) in;
-layout (triangle_strip, max_vertices = 3) out;
-
-in VS_OUT {
-    vec2 tex_coord;
-} gs_in[];
-
-out vec2 gs_tex_coord;
-
-uniform float time;
-
-vec4 ExplodeVertex(vec4 position, vec3 normal) {
-    float magnitude = 2.0;
-    vec3 direction = normal * ((sin(time) + 1.0) / 2.0) * magnitude;
-    return position + vec4(direction, 0.0);
-}
-
-void main() {
-    // get normal vector
-    vec3 a = vec3(gl_in[0].gl_Position) - vec3(gl_in[1].gl_Position);
-    vec3 b = vec3(gl_in[2].gl_Position) - vec3(gl_in[1].gl_Position);
-    vec3 normal = normalize(cross(a, b));
-
-    gl_Position = ExplodeVertex(gl_in[0].gl_Position, normal);
-    gs_tex_coord = gs_in[0].tex_coord;
-    EmitVertex();
-    gl_Position = ExplodeVertex(gl_in[1].gl_Position, normal);
-    gs_tex_coord = gs_in[1].tex_coord;
-    EmitVertex();
-    gl_Position = ExplodeVertex(gl_in[2].gl_Position, normal);
-    gs_tex_coord = gs_in[2].tex_coord;
-    EmitVertex();
-
-    EndPrimitive();
-}
-DONE
-
-EXPLODE_FRAGMENT_SHADER :: #string DONE
-#version 330 core
-out vec4 FragColor;
-
-in vec2 gs_tex_coord;
-
-uniform sampler2D diffuse;
-
-void main() {
-    FragColor = texture(diffuse, gs_tex_coord);
-}
-DONE
+#load "shaders.jai";
+#load "vertex_data.jai";
 
 main :: () {
     InitAllSystems();
@@ -430,7 +24,7 @@ main :: () {
     // shader isnt actually allocated or else we would have to free it
     glUniformBlockBinding(shader, glGetUniformBlockIndex(shader, "Matrices"), 0);
 
-    texture := BuildFromTextureLibrary("textures/container.jpg", .DIFFUSE);
+    //texture := BuildFromTextureLibrary("textures/container.jpg", .DIFFUSE);
     // freed by texture library later
 
     camera := CreateCamera(.{0.0, 0.0, 3.0});
@@ -439,15 +33,15 @@ main :: () {
     backpack := CreateModel("models/backpack/backpack.obj");
     defer FreeModel(*backpack);
 
-    cube_mesh := CreateMesh("cube", .{ cubeVertices, vertexAttributes },
+    cube_mesh := CreateMesh("cube", .{ CUBE_VERTICES, VERTEX_ATTRIBUTES_POS_TEXCOORDS },
         material = CreateMaterial("cube_mat", "textures/marble.jpg"));
     defer FreeMesh(*cube_mesh);
 
-    grass_mesh := CreateMesh("grass", .{ grassVertices, vertexAttributes },
+    grass_mesh := CreateMesh("grass", .{ GRASS_VERTICES, VERTEX_ATTRIBUTES_POS_TEXCOORDS },
         material = CreateMaterial("grass_mat", "textures/blending_transparent_window.png"));
     defer FreeMesh(*grass_mesh);
 
-    plane_mesh := CreateMesh("plane", .{ planeVertices, vertexAttributes },
+    plane_mesh := CreateMesh("plane", .{ PLANE_VERTICES, VERTEX_ATTRIBUTES_POS_TEXCOORDS },
         material = CreateMaterial("plane_mat", "textures/metal.png"));
     defer FreeMesh(*plane_mesh);
 
@@ -466,34 +60,6 @@ main :: () {
 
     blendable_objects : [..] BlendableObject;
 
-    FBO : GLuint;
-    glGenFramebuffers(1, *FBO);
-    glBindFramebuffer(GL_FRAMEBUFFER, FBO);
-
-    texture_color_buffer : GLuint;
-    glGenTextures(1, *texture_color_buffer);
-    glBindTexture(GL_TEXTURE_2D, texture_color_buffer);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, windowWidth, windowHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, null);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture_color_buffer, 0);
-
-    RBO : GLuint;
-    glGenRenderbuffers(1, *RBO);
-    glBindRenderbuffer(GL_RENDERBUFFER, RBO);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, windowWidth, windowHeight);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, RBO);
-
-    if glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE {
-        print("ERROR::FRAMEBUFFER:: Framebuffer is not complete!");
-    }
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glBindTexture(GL_TEXTURE_2D, 0);
-    glBindRenderbuffer(GL_RENDERBUFFER, 0);
-
-    screen_vao, screen_vbo := CreateVertexObjects(.{screenVertices, screenVertexAttributes});
-    screen_shader := CreateShader(SCREEN_VERTEX_SHADER, SCREEN_FRAGMENT_SHADER);
-
     skybox_faces : [6] string : .[
         "textures/skybox/right.jpg",
         "textures/skybox/left.jpg",
@@ -503,7 +69,7 @@ main :: () {
         "textures/skybox/back.jpg"
     ];
     skybox := CreateCubemap(*skybox_faces);
-    skybox_vao, _ := CreateVertexObjects(.{skyboxVertices, skyboxVertexAttributes});
+    skybox_vao, _ := CreateVertexObjects(.{SKYBOX_VERTICES, SKYBOX_VERTEX_ATTRIBUTES});
     skybox_shader := CreateShader(SKYBOX_VERTEX_SHADER, SKYBOX_FRAGMENT_SHADER);
     glUseProgram(skybox_shader);
     ShaderSetInt(skybox_shader, "skybox", 0);
@@ -529,11 +95,7 @@ main :: () {
 
         ProcessInput(*exit, deltaTimeSeconds, camera);
 
-        // set up first render pass
-        glBindFramebuffer(GL_FRAMEBUFFER, FBO);
-        glEnable(GL_DEPTH_TEST);
-        glClearColor(0.1, 0.1, 0.1, 1.0);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        SetupRenderSceneToFrameBuffer();
 
         view := CameraGetViewMatrix(camera);
         projection := make_projection_matrix(DegToRad(camera.fov), GetWindowWidth().(float)/GetWindowHeight(), 0.1, 100.0);
@@ -630,6 +192,8 @@ main :: () {
 
         // sort
         array_reset(*blendable_objects);
+        // this maybe doesnt need to be reset every frame, just re-initialize each member. O(N)
+        // also we should prob be using temp allocator for this anyways? Maybe?
         for pos : grass_positions array_add(*blendable_objects, .{ length(pos - camera.position), it_index });
         heap_view := Heapify(blendable_objects, CompareBlendableObjects);
 
@@ -640,7 +204,7 @@ main :: () {
             using,only(index) current_blendable_object;
 
             // prevent planes from being culled by back face culling:
-            // if this plane is facing away from the camera, rotate it 180 degrees
+            // if this plane is facing away from the camera, rotate it 180 degrees. Hacky!
             current_front : Vector3 = .{0.0, 0.0, cos(grass_yaws[index])};
             if dot_product(grass_positions[index] - camera.position, current_front) > 0.0 grass_yaws[index] = -(grass_yaws[index] - PI);
 
@@ -651,18 +215,7 @@ main :: () {
             DrawMesh(grass_mesh, shader);
         }
 
-        // set up second render pass
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glClearColor(1.0, 1.0, 1.0, 1.0);
-        glClear(GL_COLOR_BUFFER_BIT);
-        glUseProgram(screen_shader);
-        ShaderSetInt(screen_shader, "screenTexture", 0);
-        glBindVertexArray(screen_vao);
-        glDisable(GL_DEPTH_TEST);
-        glBindTexture(GL_TEXTURE_2D, texture_color_buffer);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
-
-        SwapBuffers();
+        RenderFrameBufferToScreen();
     }
     
     ShutdownAllSystems();
