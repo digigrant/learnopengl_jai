@@ -14,10 +14,8 @@ layout (std140) uniform Matrices {
     mat4 projection;
     mat4 view;
 };
-
 uniform mat4 model;
 
-out vec3 myColor;
 out vec2 TexCoord;
 
 void main() {
@@ -28,7 +26,6 @@ DONE
 
 FRAGMENT_SHADER :: #string DONE
 #version 330 core
-in vec3 myColor;
 in vec2 TexCoord;
 
 out vec4 FragColor;
@@ -36,7 +33,6 @@ out vec4 FragColor;
 uniform sampler2D diffuse;
 
 void main() {
-
     vec4 texColor = texture(diffuse, TexCoord);
     if (texColor.a < 0.1) discard;
     FragColor = texColor;
@@ -203,7 +199,40 @@ void main() {
 }
 DONE
 
+BACKPACK_VERTEX_SHADER :: #string DONE
+#version 330 core
+layout (location = 0) in vec3 aPos;
+layout (location = 1) in vec3 aNormal;
+layout (location = 2) in vec2 aTexCoords;
+
+layout (std140) uniform Matrices {
+    mat4 projection;
+    mat4 view;
+};
+uniform mat4 model;
+
+out vec2 tex_coords;
+
+void main() {
+    gl_Position = projection * view * model * vec4(aPos, 1.0);
+    tex_coords = aTexCoords;
+    // currently we dont do anything with normals here
+}
+DONE
+
+BACKPACK_FRAGMENT_SHADER :: #string DONE
+#version 330 core
+in vec2 tex_coords;
+out vec4 fragment_color;
+uniform sampler2D diffuse;
+
+void main() {
+    fragment_color = texture(diffuse, tex_coords);
+}
+DONE
+
 VISUALIZE_NORMALS_VERTEX_SHADER :: #string DONE
+#version 330 core
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec3 aNormal;
 
@@ -215,6 +244,47 @@ uniform mat4 view;
 uniform mat4 model;
 
 void main() {
-    // @TODO: brain is dead. continue tomorrow
+    gl_Position = view * model * vec4(aPos, 1.0);
+    mat3 normal_matrix = mat3(transpose(inverse(view * model)));
+    vs_out.normal = normalize(vec3(vec4(normal_matrix * aNormal, 0.0)));
+    // we need to save the projection for the geometry shader since
+    // we have to transform the new line we're drawing  
+}
+DONE
+
+VISUALIZE_NORMALS_GEOMETRY_SHADER :: #string DONE
+#version 330 core
+layout (triangles) in;
+layout (line_strip, max_vertices = 6) out;
+
+in VS_OUT {
+    vec3 normal;
+} gs_in[];
+
+const float MAGNITUDE = 0.4;
+
+uniform mat4 projection;
+
+void GenerateLine(int index) {
+    gl_Position = projection * gl_in[index].gl_Position;
+    EmitVertex();
+    gl_Position = projection * (gl_in[index].gl_Position + vec4(gs_in[index].normal, 0.0) * MAGNITUDE);
+    EmitVertex();
+    EndPrimitive();
+}
+
+void main() {
+    GenerateLine(0);
+    GenerateLine(1);
+    GenerateLine(2);
+}
+DONE
+
+VISUALIZE_NORMALS_FRAGMENT_SHADER :: #string DONE
+#version 330 core
+out vec4 fragment_color;
+
+void main() {
+    fragment_color = vec4(1.0, 1.0, 0.0, 1.0);
 }
 DONE

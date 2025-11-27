@@ -76,11 +76,14 @@ main :: () {
     glUseProgram(skybox_shader);
     ShaderSetInt(skybox_shader, "skybox", 0);
 
+    backpack_shader := CreateShader(BACKPACK_VERTEX_SHADER, BACKPACK_FRAGMENT_SHADER);
+    visualize_normals_shader := CreateShader(VISUALIZE_NORMALS_VERTEX_SHADER, VISUALIZE_NORMALS_FRAGMENT_SHADER, VISUALIZE_NORMALS_GEOMETRY_SHADER);
     mirror_shader := CreateShader(MIRROR_VERTEX_SHADER, MIRROR_FRAGMENT_SHADER);
     glass_shader := CreateShader(MIRROR_VERTEX_SHADER, GLASS_FRAGMENT_SHADER);
     explode_shader := CreateShader(EXPLODE_VERTEX_SHADER, EXPLODE_FRAGMENT_SHADER, EXPLODE_GEOMETRY_SHADER);
 
     // main loop
+    model : Matrix4;
     exit := false;
     while !exit {
         prevTimeSeconds = currTimeSeconds;
@@ -104,65 +107,87 @@ main :: () {
         SetUniformBufferData("Matrices", size_of(Matrix4) * 2, heehoo_matrices.data);
 
         glUseProgram(shader);
+        {
+            // cube 1
+            model = Matrix4_Identity;
+            translate(*model, .{ -1.0, 0.0, -1.0 });
+            ShaderSetMat4(shader, "model", *model);
+            DrawMesh(cube_mesh, shader);
 
-        // cube 1
-        model := Matrix4_Identity;
-        translate(*model, .{ -1.0, 0.0, -1.0 });
-        ShaderSetMat4(shader, "model", *model);
-        DrawMesh(cube_mesh, shader);
+            model = Matrix4_Identity;
+            translate(*model, .{ 2.0, 0.0, 0.0 });
+            ShaderSetMat4(shader, "model", *model);
+            DrawMesh(cube_mesh, shader);
 
-        model = Matrix4_Identity;
-        translate(*model, .{ 2.0, 0.0, 0.0 });
-        ShaderSetMat4(shader, "model", *model);
-        DrawMesh(cube_mesh, shader);
-
-        // floor
-        model = Matrix4_Identity;
-        ShaderSetMat4(shader, "model", *model);
-        DrawMesh(plane_mesh, shader);
+            // floor
+            model = Matrix4_Identity;
+            ShaderSetMat4(shader, "model", *model);
+            DrawMesh(plane_mesh, shader);
+        }
 
         // mirror backpack
         glUseProgram(mirror_shader);
-        model = Matrix4_Identity;
-        translate(*model, .{-10.0, 0.0, 10.0});
-        ShaderSetMat4(mirror_shader, "model", *model);
-        ShaderSetVec3(mirror_shader, "camera_pos", *(camera.position));
-        DrawModel(backpack, mirror_shader);
+        {
+            model = Matrix4_Identity;
+            translate(*model, .{-10.0, 0.0, 10.0});
+            ShaderSetMat4(mirror_shader, "model", *model);
+            ShaderSetVec3(mirror_shader, "camera_pos", *(camera.position));
+            DrawModel(backpack, mirror_shader);
+        }
 
         // glass backpack
         glUseProgram(glass_shader);
-        model = Matrix4_Identity;
-        translate(*model, .{0.0, 0.0, 10.0});
-        ShaderSetMat4(glass_shader, "model", *model);
-        ShaderSetVec3(glass_shader, "camera_pos", *(camera.position));
-        DrawModel(backpack, glass_shader);
+        {
+            model = Matrix4_Identity;
+            translate(*model, .{0.0, 0.0, 10.0});
+            ShaderSetMat4(glass_shader, "model", *model);
+            ShaderSetVec3(glass_shader, "camera_pos", *(camera.position));
+            DrawModel(backpack, glass_shader);
+        }
 
         // exploding backpack
         glUseProgram(explode_shader);
-        model = Matrix4_Identity;
-        translate(*model, .{10.0, 0.0, 10.0});
-        ShaderSetMat4(explode_shader, "model", *model);
-        ShaderSetFloat(explode_shader, "time", currTimeSeconds);
-        DrawModel(backpack, explode_shader);
-
-        // draw skybox last
-        glDepthFunc(GL_LEQUAL);
-        glUseProgram(skybox_shader);
-        skybox_view := view;
-        for 0..2 {
-            using skybox_view;
-            coef[it][3] = 0.0;
-            coef[3][it] = 0.0;
+        {
+            model = Matrix4_Identity;
+            translate(*model, .{10.0, 0.0, 10.0});
+            ShaderSetMat4(explode_shader, "model", *model);
+            ShaderSetFloat(explode_shader, "time", currTimeSeconds);
+            DrawModel(backpack, explode_shader);
         }
 
-        ShaderSetMat4(skybox_shader, "view", *skybox_view);
-        ShaderSetMat4(skybox_shader, "projection", *projection);
-        glBindVertexArray(skybox_vao);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, skybox.id); // DrawCubemap()
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-        glBindVertexArray(0);
-        glDepthFunc(GL_LESS);
+        // fuzzy backpack - original pass
+        fuzzy_backpack_translate : Vector3 = .{12.0, 0.0, 0.0};
+        glUseProgram(backpack_shader);
+        {
+            model = Matrix4_Identity;
+            translate(*model, fuzzy_backpack_translate);
+            ShaderSetMat4(backpack_shader, "model", *model);
+            // Matrices UBO gets used for original pass
+            DrawModel(backpack, backpack_shader);
+        }
+
+        // draw skybox last
+        glUseProgram(skybox_shader);
+        {
+            glDepthFunc(GL_LEQUAL);
+
+            skybox_view := view;
+            for 0..2 {
+                using skybox_view;
+                coef[it][3] = 0.0;
+                coef[3][it] = 0.0;
+            }
+
+            ShaderSetMat4(skybox_shader, "view", *skybox_view);
+            ShaderSetMat4(skybox_shader, "projection", *projection);
+            glBindVertexArray(skybox_vao);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, skybox.id); // DrawCubemap()
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+            glBindVertexArray(0);
+
+            glDepthFunc(GL_LESS);
+        }
 
         // blendable objects
         grass_positions : [5] Vector3 : .[
@@ -175,30 +200,44 @@ main :: () {
         grass_yaws : [5] float = .[ 0.0, 0.0, 0.0, 0.0, 0.0 ];
 
         glUseProgram(shader);
+        {
+            // sort
+            array_reset(*blendable_objects);
+            // this maybe doesnt need to be reset every frame, just re-initialize each member. O(N)
+            // also we should prob be using temp allocator for this anyways? Maybe?
+            for pos : grass_positions array_add(*blendable_objects, .{ length(pos - camera.position), it_index });
+            heap_view := Heapify(blendable_objects, CompareBlendableObjects);
 
-        // sort
-        array_reset(*blendable_objects);
-        // this maybe doesnt need to be reset every frame, just re-initialize each member. O(N)
-        // also we should prob be using temp allocator for this anyways? Maybe?
-        for pos : grass_positions array_add(*blendable_objects, .{ length(pos - camera.position), it_index });
-        heap_view := Heapify(blendable_objects, CompareBlendableObjects);
+            // draw
+            current_blendable_object : *BlendableObject;
+            for 0..blendable_objects.count -1 {
+                current_blendable_object := HeapPop(*heap_view, CompareBlendableObjects);
+                using,only(index) current_blendable_object;
 
-        // draw
-        current_blendable_object : *BlendableObject;
-        for 0..blendable_objects.count -1 {
-            current_blendable_object := HeapPop(*heap_view, CompareBlendableObjects);
-            using,only(index) current_blendable_object;
+                // prevent planes from being culled by back face culling:
+                // if this plane is facing away from the camera, rotate it 180 degrees. Hacky!
+                current_front : Vector3 = .{0.0, 0.0, cos(grass_yaws[index])};
+                if dot_product(grass_positions[index] - camera.position, current_front) > 0.0 grass_yaws[index] = -(grass_yaws[index] - PI);
 
-            // prevent planes from being culled by back face culling:
-            // if this plane is facing away from the camera, rotate it 180 degrees. Hacky!
-            current_front : Vector3 = .{0.0, 0.0, cos(grass_yaws[index])};
-            if dot_product(grass_positions[index] - camera.position, current_front) > 0.0 grass_yaws[index] = -(grass_yaws[index] - PI);
+                model = Matrix4_Identity;
+                translate(*model, grass_positions[index]);
+                RotateMatrix4(*model, grass_yaws[index], .{0.0, 1.0, 0.0});
+                ShaderSetMat4(shader, "model", *model);
+                DrawMesh(grass_mesh, shader);
+            }
+        }
 
+        // fuzzy backpack 2 electric boogaloo
+        glUseProgram(visualize_normals_shader);
+        {
             model = Matrix4_Identity;
-            translate(*model, grass_positions[index]);
-            RotateMatrix4(*model, grass_yaws[index], .{0.0, 1.0, 0.0});
-            ShaderSetMat4(shader, "model", *model);
-            DrawMesh(grass_mesh, shader);
+            translate(*model, fuzzy_backpack_translate);
+            ShaderSetMat4(visualize_normals_shader, "model", *model);
+            // view and projection have to be individually set for fuzzy pass
+            // .....or DO THEY???
+            ShaderSetMat4(visualize_normals_shader, "view", *view);
+            ShaderSetMat4(visualize_normals_shader, "projection", *projection);
+            DrawModel(backpack, visualize_normals_shader);
         }
 
         RenderFrameBufferToScreen();
