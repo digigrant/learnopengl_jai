@@ -47,9 +47,6 @@ main :: () {
         material = CreateMaterial("plane_mat", "textures/metal.png"));
     defer FreeMesh(*plane_mesh);
 
-    // timekeeping
-    currTimeSeconds, prevTimeSeconds, deltaTimeSeconds : float;
-
     BlendableObject :: struct {
         distance_from_camera : float;
         index : int;
@@ -83,6 +80,8 @@ main :: () {
     explode_shader := CreateShader(EXPLODE_VERTEX_SHADER, EXPLODE_FRAGMENT_SHADER, EXPLODE_GEOMETRY_SHADER);
 
     // main loop
+    // timekeeping
+    currTimeSeconds, prevTimeSeconds, deltaTimeSeconds : float;
     model : Matrix4;
     exit := false;
     while !exit {

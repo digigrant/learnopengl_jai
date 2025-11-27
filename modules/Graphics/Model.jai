@@ -7,7 +7,7 @@ Model :: struct {
 };
 
 CreateModel :: (path : string) -> model : *Model {
-    obj_ok, obj_data := ImportDataFromObj("models/backpack/backpack.obj");
+    obj_ok, obj_data := ImportDataFromObj(path);
     if !obj_ok {
         print("Model: could not load '%'\n", path);
         return null;
