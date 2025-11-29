@@ -11,6 +11,7 @@ ParseLineForWords :: (text : string, cursor : *int, print_debug : bool = false, 
     for char : line {
         if char == {
             case #char "#"; break;
+            case #char "\r"; #through;  // creates problems on windows if we don't also parse for this
             case #char " "; {
                 if it_index <= word_start continue;
                 new_word := slice(line, word_start, it_index - word_start);

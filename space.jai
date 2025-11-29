@@ -8,7 +8,7 @@
 using,except (Init, Shutdown) Graphics :: #import "Graphics";
 using,except (Init, Shutdown) Input :: #import "Input";
 
-USE_INSTANCE_ARRAY :: 0;
+USE_INSTANCE_ARRAY :: 1;
 
 MODEL_VERTEX_SHADER :: #string DONE
 #version 330 core
@@ -74,15 +74,12 @@ main :: () {
     // could just be something we tell the graphics module to make for us
     camera := CreateCamera(.{0.0, 20.0, 50.0});
     defer FreeCamera(*camera);
-
+    
     planet := CreateModel("models/planet/planet.obj");
     defer FreeModel(*planet);
 
     rock := CreateModel("models/rock/rock.obj");
-    // have to add rock texture manually - ew
-    for rock : rock.meshes rock.material.diffuse_texture = BuildFromTextureLibrary("models/rock/rock.png", .DIFFUSE);
     defer FreeModel(*rock);
-    print("Rock meshes count: %\n", rock.meshes.count);
 
     model_shader := CreateShader(MODEL_VERTEX_SHADER, MODEL_FRAGMENT_SHADER);
     instanced_model_shader := CreateShader(INSTANCED_MODEL_VERTEX_SHADER, MODEL_FRAGMENT_SHADER);
