@@ -51,8 +51,6 @@ DrawMesh :: (using mesh : *Mesh, shader : u32) {
     if material glBindTexture(GL_TEXTURE_2D, material.diffuse_texture.id);
     ShaderSetInt(shader, "diffuse", 0);
 
-    print("%\n", mesh.vertexData);
-
     if mesh.drawType == {
         case .DRAW_ARRAYS;      glDrawArrays(GL_TRIANGLES, 0, mesh.vertexData.floats.count.(u32));
         case .DRAW_ELEMENTS;    glDrawElements(GL_TRIANGLES, mesh.indices.count.(u32), GL_UNSIGNED_INT, null);
