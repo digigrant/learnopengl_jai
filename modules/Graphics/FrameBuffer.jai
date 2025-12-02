@@ -1,8 +1,9 @@
 #scope_file
 
 // globals
-frame_buffer    : GLuint;
-color_buffer    : GLuint;
+multisample_frame_buffer    : GLuint;
+intermediate_frame_buffer   : GLuint;
+intermediate_color_buffer   : GLuint;
 screen_vao      : GLuint;
 screen_shader   : GLuint;
 
@@ -63,33 +64,57 @@ DONE
 */
 
 InitFrameBuffer :: () {
-    glGenFramebuffers(1, *frame_buffer);
-    glGenTextures(1, *color_buffer);
+    glGenFramebuffers(1, *multisample_frame_buffer);
+    glGenFramebuffers(1, *intermediate_frame_buffer);
 
-    RBO : GLuint;
-    glGenRenderbuffers(1, *RBO);
+    multisample_color_buffer : GLuint;
+    glGenTextures(1, *multisample_color_buffer);
+    glGenTextures(1, *intermediate_color_buffer);
 
-    // bind frame buffer
-    glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer);
+    multisample_render_buffer   : GLuint;
+    glGenRenderbuffers(1, *multisample_render_buffer);
+
+
+
+    /*** MULTISAMPLE FRAME BUFFER ***/
+    glBindFramebuffer(GL_FRAMEBUFFER, multisample_frame_buffer);
+
     // setup texture attachment
-    glBindTexture(GL_TEXTURE_2D, color_buffer);
+    glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, multisample_color_buffer);
+    glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, NUM_MULTISAMPLE_SAMPLES, GL_RGB, windowWidth, windowHeight, GL_TRUE);
+
+    // setup render buffer attachment
+    glBindRenderbuffer(GL_RENDERBUFFER, multisample_render_buffer);
+    glRenderbufferStorageMultisample(GL_RENDERBUFFER, NUM_MULTISAMPLE_SAMPLES, GL_DEPTH24_STENCIL8, windowWidth, windowHeight);
+
+    // set attachments
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, multisample_color_buffer, 0);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, multisample_render_buffer);
+    if glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE {
+        print("ERROR::FRAMEBUFFER:: Multi-sample framebuffer is not complete!");
+    }
+
+
+
+    /*** INTERMEDIATE FRAME BUFFER ***/
+    glBindFramebuffer(GL_FRAMEBUFFER, intermediate_frame_buffer);
+
+    glBindTexture(GL_TEXTURE_2D, intermediate_color_buffer);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, windowWidth, windowHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, null);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    // setup render buffer attachment
-    glBindRenderbuffer(GL_RENDERBUFFER, RBO);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, windowWidth, windowHeight);
 
-    // set attachments
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, color_buffer, 0);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, RBO);
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, intermediate_color_buffer, 0);
     if glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE {
-        print("ERROR::FRAMEBUFFER:: Framebuffer is not complete!");
+        print("ERROR::FRAMEBUFFER:: Intermediate framebuffer is not complete!");
     }
+
+
 
     // unbind everything
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glBindTexture(GL_TEXTURE_2D, 0);
+    glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
     glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
     // create screen vao and shader
@@ -101,7 +126,7 @@ InitFrameBuffer :: () {
 
 // set up first render pass to the frame buffer
 SetupRenderSceneToFrameBuffer :: () {
-    glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, multisample_frame_buffer);
     glClearColor(0.1, 0.1, 0.1, 1.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
@@ -109,16 +134,21 @@ SetupRenderSceneToFrameBuffer :: () {
 
 // set up and draw second render pass to screen
 RenderFrameBufferToScreen :: () {
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, multisample_frame_buffer);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, intermediate_frame_buffer);
+    glBlitFramebuffer(0, 0, xx windowWidth, xx windowHeight, 0, 0, xx windowWidth, xx windowHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+    
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    
     glClearColor(1.0, 1.0, 1.0, 1.0);
     glClear(GL_COLOR_BUFFER_BIT);
     glDisable(GL_DEPTH_TEST);
 
     glUseProgram(screen_shader);
     ShaderSetInt(screen_shader, "screenTexture", 0);
-    glBindTexture(GL_TEXTURE_2D, color_buffer);
-
     glBindVertexArray(screen_vao);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, intermediate_color_buffer);
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
     SwapBuffers();

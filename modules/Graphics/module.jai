@@ -17,6 +17,9 @@
 DEFAULT_WINDOW_WIDTH    :: 800;
 DEFAULT_WINDOW_HEIGHT   :: 600;
 
+NUM_MULTISAMPLE_BUFFERS :: 1;
+NUM_MULTISAMPLE_SAMPLES :: 4;
+
 // global variables
 window : *SDL_Window;
 windowWidth : u32 = DEFAULT_WINDOW_WIDTH;
@@ -34,6 +37,9 @@ Init :: () -> ok : bool {
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3); // OpenGL 3.3
 
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, NUM_MULTISAMPLE_BUFFERS);  // MSAA
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, NUM_MULTISAMPLE_SAMPLES);
+
     // create window
     window = SDL_CreateWindow("LearnOpenGL_Jai", SDL_WINDOWPOS_UNDEFINED,
         SDL_WINDOWPOS_UNDEFINED, xx windowWidth, xx windowHeight,
@@ -50,6 +56,13 @@ Init :: () -> ok : bool {
         print("Could not create OpenGL context: %\n", to_string(SDL_GetError()));
         return false;
     }
+
+    // apparently we ought to check these actually get applied
+    buffers, samples : s32; // throw em on the temp buffer chief
+    SDL_GL_GetAttribute(SDL_GL_MULTISAMPLEBUFFERS, *buffers);
+    SDL_GL_GetAttribute(SDL_GL_MULTISAMPLESAMPLES, *samples);
+    if buffers != NUM_MULTISAMPLE_BUFFERS print("SDL couldn't set multisample buffers. Actual: %\n", buffers);
+    if samples != NUM_MULTISAMPLE_SAMPLES print("SDL couldn't set multisample samples. Actual: %\n", samples);
 
     // initialize GLAD
     gl_load(*gl, SDL_GL_GetProcAddress);
