@@ -6,8 +6,8 @@ Camera :: struct {
 
     // all rotations are stored in radians
     using rotation : Vector3;
-    #place x; pitch : float;
-    #place y; yaw : float;
+    #overlay (x) pitch : float;
+    #overlay (y) yaw : float;
 
     right : Vector3;
     up : Vector3;
