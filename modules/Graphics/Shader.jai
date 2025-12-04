@@ -87,6 +87,11 @@ ShaderSetFloat :: (shaderId : u32, name : string, value : float) {
 }
 
 ShaderSetVec3 :: (shaderId : u32, name : string, vec3 : *Vector3) {
+    #run print("***\nShaderSetVec3 using a pointer is being deprecated. Switch it to the non-pointer version.\n***\n");
+    glUniform3fv(glGetUniformLocation(shaderId, to_c_string(name)), 1, vec3.component.data);
+}
+
+ShaderSetVec3 :: (shaderId : u32, name : string, vec3 : Vector3) {
     glUniform3fv(glGetUniformLocation(shaderId, to_c_string(name)), 1, vec3.component.data);
 }
 
