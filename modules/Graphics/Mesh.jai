@@ -47,9 +47,16 @@ FreeMesh :: (mesh : **Mesh) {
 DrawMesh :: (using mesh : *Mesh, shader : u32) {
     glBindVertexArray(VAO);
 
+    if material {
+        using material;
+        if diffuse_texture glBindTexture(GL_TEXTURE_2D, diffuse_texture.id);
+        ShaderSetVec3(shader, "material.ambient", ambient_color); // can we memcpy this :thinking:
+        ShaderSetVec3(shader, "material.diffuse", diffuse_color);
+        ShaderSetVec3(shader, "material.specular", specular_color);
+        ShaderSetFloat(shader, "material.shininess", shininess);
+    }
     glActiveTexture(GL_TEXTURE0);
-    if material glBindTexture(GL_TEXTURE_2D, material.diffuse_texture.id);
-    ShaderSetInt(shader, "diffuse", 0);
+    ShaderSetInt(shader, "diffuse", 0);            
 
     if mesh.drawType == {
         case .DRAW_ARRAYS;      glDrawArrays(GL_TRIANGLES, 0, mesh.vertexData.floats.count.(u32));

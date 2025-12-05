@@ -33,29 +33,39 @@ in vec3 fragment_pos;
 in vec3 normal;
 out vec4 fragment_color;
 
-uniform vec3 object_color;
-
-uniform vec3 light_pos;
 uniform vec3 view_pos;
 
-uniform vec3 ambient_color;
-uniform vec3 diffuse_color;
-uniform vec3 specular_color;
+struct Material {
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+    float shininess;
+};
+uniform Material material;
 
-float specular_strength = 0.5;
+struct Light {
+    vec3 position;
+
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+};
+uniform Light light;
 
 void main() {
+    vec3 ambient = light.ambient * material.ambient;
+
     vec3 n_normal = normalize(normal);
-    vec3 light_dir = normalize(light_pos - fragment_pos); // in world space atm
+    vec3 light_dir = normalize(light.position - fragment_pos); // in world space atm
     float diff = max(dot(n_normal, light_dir), 0.0);
-    vec3 diffuse = diff * diffuse_color;
+    vec3 diffuse = light.diffuse * (diff * material.diffuse);
 
     vec3 view_dir = normalize(view_pos - fragment_pos);
     vec3 reflect_dir = reflect(-light_dir, n_normal);
-    float spec = pow(max(dot(view_dir, reflect_dir), 0.0), 32);
-    vec3 specular = specular_strength * spec * specular_color;
+    float spec = pow(max(dot(view_dir, reflect_dir), 0.0), material.shininess);
+    vec3 specular = light.specular * (spec * material.specular);
 
-    vec3 result = (ambient_color + diffuse + specular) * object_color;
+    vec3 result = ambient + diffuse + specular;
     fragment_color = vec4(result, 1.0);
 }
 DONE
@@ -131,6 +141,14 @@ main :: () {
     defer FreeCamera(*camera);
 
     cube_mesh := CreateMesh("cube", .{ CUBE_VERTICES, CUBE_VERTEX_ATTRIBUTES });
+    cube_mesh.material = CreateMaterial("cube_mat");
+    {
+        using cube_mesh.material;
+        ambient_color = .{ 1.0, 0.5, 0.31 };
+        diffuse_color = .{ 1.0, 0.5, 0.31 };
+        specular_color = .{ 0.5, 0.5, 0.5 };
+        shininess = 32.0;
+    }
     defer FreeMesh(*cube_mesh);
 
     // technically light mesh and cube mesh can use the same VBO and different VAOs
@@ -139,6 +157,10 @@ main :: () {
     light_mesh := CreateMesh("light", .{ CUBE_VERTICES, CUBE_VERTEX_ATTRIBUTES});
     defer FreeMesh(*light_mesh);
     light_pos : Vector3 = .{1.2, 1.0, 2.0};
+    light_base_color : Vector3 = .{ 0.0, 1.0, 0.0 };
+    light_base_ambient : Vector3 = .{ 0.2, 0.2, 0.2 };
+    light_base_diffuse : Vector3 = .{ 0.5, 0.5, 0.5 };
+    light_base_specular : Vector3 = .{ 1.0, 1.0, 1.0 };
 
     cube_shader := CreateShader(CUBE_VERTEX_SHADER, CUBE_FRAGMENT_SHADER);
     light_shader := CreateShader(CUBE_VERTEX_SHADER, LIGHT_FRAGMENT_SHADER);
@@ -171,12 +193,11 @@ main :: () {
         {
             cube_model := Matrix4_Identity;
             ShaderSetMat4(cube_shader, "model", *cube_model);
-            ShaderSetVec3(cube_shader, "object_color", .{ 1.0, 0.5, 0.31 });
-            ShaderSetVec3(cube_shader, "light_pos", light_pos);
             ShaderSetVec3(cube_shader, "view_pos", camera.position);
-            ShaderSetVec3(cube_shader, "ambient_color", .{ 0.1, 0.1, 0.1 });
-            ShaderSetVec3(cube_shader, "diffuse_color", .{ 1.0, 1.0, 1.0 });
-            ShaderSetVec3(cube_shader, "specular_color", .{ 1.0, 1.0, 1.0 });
+            ShaderSetVec3(cube_shader, "light.position", light_pos);
+            ShaderSetVec3(cube_shader, "light.ambient", light_base_color * light_base_ambient);
+            ShaderSetVec3(cube_shader, "light.diffuse", light_base_color * light_base_diffuse);
+            ShaderSetVec3(cube_shader, "light.specular", light_base_color * light_base_specular);
             DrawMesh(cube_mesh, cube_shader);
         }
 
