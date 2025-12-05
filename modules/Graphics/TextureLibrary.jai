@@ -17,7 +17,7 @@ InitTextureLibrary :: () {
     using texture_library;
 
     for diffuse_list it = null;
-    for diffuse_list it = null;
+    for specular_list it = null;
     diffuse_count, specular_count = 0;
 }
 

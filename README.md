@@ -6,4 +6,4 @@ TODO:
 - memory arena audit
 - create base engine
 - create scene & scene manager system
-- move lighting calculation to view space
+- update Model import to work with MaterialLibrary

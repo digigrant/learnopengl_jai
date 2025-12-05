@@ -2,6 +2,7 @@
 #load "Cubemap.jai";
 #load "FrameBuffer.jai";
 #load "Material.jai";
+#load "MaterialLibrary.jai";
 #load "Mesh.jai";
 #load "Model.jai";
 #load "Shader.jai";
@@ -69,6 +70,7 @@ Init :: () -> ok : bool {
     // we should check that it was initialized correctly.... but i dont know how
 
     InitFrameBuffer();
+    InitMaterialLibrary();
     InitTextureLibrary();
     InitUniformBufferRegistry();
 

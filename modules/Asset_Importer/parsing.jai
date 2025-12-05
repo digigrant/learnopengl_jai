@@ -41,3 +41,50 @@ AddNewWord :: (words : *[..] string, new_word : string, word_start : int, word_e
     array_add(words, new_word);
     if print_debug print("ParseLineForWords: Finished '%' from index %, %\n", new_word, word_start, word_end);
 }
+
+#scope_export
+
+ReadValue :: (file : string, cursor : *int, $T : Type) -> value : T {
+    start := cursor.*;
+    while cursor.* < file.count {
+        if is_any(file[cursor.*], ifx type_info(T).type != .STRING then DEFAULT_SPACES else "\t\r\n") break;
+        cursor.* += 1;
+    }
+
+    value_text := slice(file, start, (cursor.*)-start);
+    MoveCursorToNextValue(file, cursor);
+
+    PrintError :: () { print("Don't know how to read that value type: %\n", T); }
+
+    #if type_info(T).type == {
+        case .STRING;   return value_text;
+        case .INTEGER;  return string_to_int(value_text);
+        case .FLOAT;    return string_to_float(value_text);
+        case .STRUCT; {
+            type_info_struct := cast(*Type_Info_Struct) type_info(T);
+            if type_info_struct.name == {
+                case "Vector3"; return .{
+                    string_to_float(value_text),
+                    ReadValue(file, cursor, float),
+                    ReadValue(file, cursor, float)
+                };
+                case; {
+                    PrintError();
+                    return .{};
+                }
+            }
+        }
+        case; {
+            PrintError();
+            return null;
+        }
+    }
+}
+
+#scope_file
+
+MoveCursorToNextValue :: (file : string, cursor : *int) {
+    while cursor.* < file.count && is_any(file[cursor.*], DEFAULT_SPACES) {
+        cursor.* += 1;
+    }
+}

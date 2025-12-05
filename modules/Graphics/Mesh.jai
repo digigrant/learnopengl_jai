@@ -35,11 +35,7 @@ CreateMesh :: (name : string, vertexData : VertexData, indices : [] u32 = .{}, t
 
 FreeMesh :: (mesh : **Mesh) {
     if !mesh || !(mesh.*) return;
-    // @TODO: implement material library so we dont have to worry about it
-    if mesh.*.material FreeMaterial(*(mesh.*.material));
-
     // we need to delete VAOs and VBOs too... how tf we do that elegantly
-
     free(mesh.*);
     (mesh.*) = null;
 }

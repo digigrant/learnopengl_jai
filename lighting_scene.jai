@@ -139,14 +139,7 @@ main :: () {
     defer FreeCamera(*camera);
 
     cube_mesh := CreateMesh("cube", .{ CUBE_VERTICES, CUBE_VERTEX_ATTRIBUTES });
-    cube_mesh.material = CreateMaterial("cube_mat");
-    {
-        using cube_mesh.material;
-        ambient_color = .{ 1.0, 0.5, 0.31 };
-        diffuse_color = .{ 1.0, 0.5, 0.31 };
-        specular_color = .{ 0.5, 0.5, 0.5 };
-        shininess = 32.0;
-    }
+    cube_mesh.material = BuildFromMaterialibrary("emerald");
     defer FreeMesh(*cube_mesh);
 
     // technically light mesh and cube mesh can use the same VBO and different VAOs
@@ -155,7 +148,7 @@ main :: () {
     light_mesh := CreateMesh("light", .{ CUBE_VERTICES, CUBE_VERTEX_ATTRIBUTES});
     defer FreeMesh(*light_mesh);
     light_pos : Vector3 = .{1.2, 1.0, 2.0};
-    light_base_color : Vector3 = .{ 0.0, 1.0, 0.0 };
+    light_base_color : Vector3 = .{ 1.0, 1.0, 1.0 };
     light_base_ambient : Vector3 = .{ 0.2, 0.2, 0.2 };
     light_base_diffuse : Vector3 = .{ 0.5, 0.5, 0.5 };
     light_base_specular : Vector3 = .{ 1.0, 1.0, 1.0 };
@@ -191,7 +184,6 @@ main :: () {
         {
             cube_model := Matrix4_Identity;
             ShaderSetMat4(cube_shader, "model", *cube_model);
-            ShaderSetVec3(cube_shader, "view_pos", camera.position);
             light_view_pos : Vector3 = (view * make_vector4(light_pos, 1.0)).xyz;
             ShaderSetVec3(cube_shader, "light.view_pos", light_view_pos);
             ShaderSetVec3(cube_shader, "light.ambient", light_base_color * light_base_ambient);
