@@ -3,4 +3,7 @@
 TODO:
 - make sure disabling (aka not using) render buffer works
 - temp alloc audit
-- 
+- memory arena audit
+- create base engine
+- create scene & scene manager system
+- move lighting calculation to view space

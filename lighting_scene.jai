@@ -17,23 +17,21 @@ layout (std140) uniform Matrices {
 };
 uniform mat4 model;
 
-out vec3 fragment_pos;
+out vec3 frag_view_pos;
 out vec3 normal;
 
 void main() {
     gl_Position = projection * view * model * vec4(aPos, 1.0);
-    fragment_pos = vec3(model * vec4(aPos, 1.0)); // change to view space
-    normal = aNormal;
+    frag_view_pos = vec3(view * model * vec4(aPos, 1.0)); // change to view space
+    normal = vec3(view * vec4(aNormal, 0.0));
 }
 DONE
 
 CUBE_FRAGMENT_SHADER :: #string DONE
 #version 330 core
-in vec3 fragment_pos;
+in vec3 frag_view_pos;
 in vec3 normal;
 out vec4 fragment_color;
-
-uniform vec3 view_pos;
 
 struct Material {
     vec3 ambient;
@@ -44,7 +42,7 @@ struct Material {
 uniform Material material;
 
 struct Light {
-    vec3 position;
+    vec3 view_pos;
 
     vec3 ambient;
     vec3 diffuse;
@@ -56,11 +54,11 @@ void main() {
     vec3 ambient = light.ambient * material.ambient;
 
     vec3 n_normal = normalize(normal);
-    vec3 light_dir = normalize(light.position - fragment_pos); // in world space atm
+    vec3 light_dir = normalize(light.view_pos - frag_view_pos);
     float diff = max(dot(n_normal, light_dir), 0.0);
     vec3 diffuse = light.diffuse * (diff * material.diffuse);
 
-    vec3 view_dir = normalize(view_pos - fragment_pos);
+    vec3 view_dir = normalize(-frag_view_pos);
     vec3 reflect_dir = reflect(-light_dir, n_normal);
     float spec = pow(max(dot(view_dir, reflect_dir), 0.0), material.shininess);
     vec3 specular = light.specular * (spec * material.specular);
@@ -194,7 +192,8 @@ main :: () {
             cube_model := Matrix4_Identity;
             ShaderSetMat4(cube_shader, "model", *cube_model);
             ShaderSetVec3(cube_shader, "view_pos", camera.position);
-            ShaderSetVec3(cube_shader, "light.position", light_pos);
+            light_view_pos : Vector3 = (view * make_vector4(light_pos, 1.0)).xyz;
+            ShaderSetVec3(cube_shader, "light.view_pos", light_view_pos);
             ShaderSetVec3(cube_shader, "light.ambient", light_base_color * light_base_ambient);
             ShaderSetVec3(cube_shader, "light.diffuse", light_base_color * light_base_diffuse);
             ShaderSetVec3(cube_shader, "light.specular", light_base_color * light_base_specular);
