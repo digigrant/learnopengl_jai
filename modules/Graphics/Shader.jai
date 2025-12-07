@@ -98,3 +98,10 @@ ShaderSetVec3 :: (shaderId : u32, name : string, vec3 : Vector3) {
 ShaderSetMat4 :: (shaderId : u32, name : string, mat4 : *Matrix4) {
     glUniformMatrix4fv(glGetUniformLocation(shaderId, to_c_string(name)), 1, GL_TRUE, mat4.floats.data);
 }
+
+ShaderSetTexture2D :: (shader_id : u32, name : string, texture_id : GLuint, binding_slot : u8 = 0) {
+    glActiveTexture(cast(u32) GL_TEXTURE0 + binding_slot);
+    glBindTexture(GL_TEXTURE_2D, texture_id);
+    ShaderSetInt(shader_id, name, binding_slot);
+    // we keep this active and bound - is that good?? who knows
+}
