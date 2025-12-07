@@ -15,8 +15,6 @@
         JOYSTICK_LEFT_TRIGGER       :: 4;
         JOYSTICK_RIGHT_TRIGGER      :: 5;
 
-        CAMERA_SENSITIVITY :: 0.08;
-
     case .LINUX;
         JOYSTICK_LEFT_THUMBSTICK_X  :: 0;
         JOYSTICK_LEFT_THUMBSTICK_Y  :: 1;
@@ -24,8 +22,6 @@
         JOYSTICK_RIGHT_THUMBSTICK_Y :: 4;
         JOYSTICK_LEFT_TRIGGER       :: 2;
         JOYSTICK_RIGHT_TRIGGER      :: 5;
-
-        CAMERA_SENSITIVITY :: 3.0;
 }
 
 JOYSTICK_DEADZONE       :: 3200 / S16_MAX.(float);
@@ -123,7 +119,8 @@ ProcessInput :: (exit : *bool, deltaTimeSeconds : float, camera : *Camera) {
         }
 
         if length(right_thumbstick) > JOYSTICK_DEADZONE {
-            CameraRotate(camera, .{right_thumbstick.y, right_thumbstick.x} * CAMERA_SENSITIVITY);
+            CAMERA_SENSITIVITY :: 300.0;
+            CameraRotate(camera, .{right_thumbstick.y, right_thumbstick.x} * deltaTimeSeconds * CAMERA_SENSITIVITY);
         }
 
         //for 0..SDL_JoystickNumButtons(joysticks[0])-1 print("% ", SDL_JoystickGetButton(joysticks[0], it));
