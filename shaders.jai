@@ -450,7 +450,11 @@ vec3 CalculateSpotLight(SpotLight s_light, vec3 normal, vec3 frag_pos, vec3 view
 void main() {
     vec3 n_normal = normalize(normal);
     vec3 view_dir = normalize(-frag_view_pos);
-    vec3 result = CalculateDirectionalLight(directional_light, n_normal, view_dir);
+    // vec3 result = CalculateDirectionalLight(directional_light, n_normal, view_dir);
+    vec3 result = vec3(0.0);
+    for (int i = 0; i < NUMBER_POINT_LIGHTS; i++) {
+        result += CalculatePointLight(point_lights[i], n_normal, frag_view_pos, view_dir);
+    }
     fragment_color = vec4(result, 1.0);
 }
 DONE
@@ -458,8 +462,9 @@ DONE
 LIGHT_FRAGMENT_SHADER :: #string DONE
 #version 330 core
 out vec4 fragment_color;
+uniform vec3 color;
 
 void main() {
-    fragment_color = vec4(1.0);
+    fragment_color = vec4(color, 1.0);
 }
 DONE

@@ -1,6 +1,7 @@
 #load "Camera.jai";
 #load "Cubemap.jai";
 #load "FrameBuffer.jai";
+#load "Light.jai";
 #load "Material.jai";
 #load "MaterialLibrary.jai";
 #load "Mesh.jai";
