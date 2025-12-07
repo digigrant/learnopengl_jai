@@ -130,13 +130,6 @@ main :: () {
         specular_color = .{1.0, 1.0, 1.0}
     };
 
-    glUseProgram(cube_shader);
-    {
-        ShaderSetVec3(cube_shader, "directional_light.ambient", directional_light.ambient_color);
-        ShaderSetVec3(cube_shader, "directional_light.diffuse", directional_light.diffuse_color);
-        ShaderSetVec3(cube_shader, "directional_light.specular", directional_light.specular_color);
-    }
-
     point_lights : [4] PointLight;
     for * p_light, i : point_lights {
         using p_light;
@@ -149,8 +142,39 @@ main :: () {
         linear = 0.09;
         quadratic = 0.032;
     }
-    print("%\n", point_lights);
 
+    spot_light := SpotLight.{
+        name = "my_spot_light",
+        position = .{0.0, 0.0, 0.0},
+        direction = .{0.0, 0.0, -1.0},
+        ambient_color = .{0.2, 0.2, 0.2},
+        diffuse_color = .{0.5, 0.5, 0.5},
+        specular_color = .{1.0, 1.0, 1.0},
+        inner_cutoff = #run cos(DegToRad(12.5)),
+        outer_cutoff = #run cos(DegToRad(17.5)),
+        constant = 1.0,
+        linear = 0.09,
+        quadratic = 0.032
+    };
+
+    // these lighting uniforms dont change from frame to frame so we can set them here
+    glUseProgram(cube_shader);
+    {
+        ShaderSetVec3(cube_shader, "directional_light.ambient", directional_light.ambient_color);
+        ShaderSetVec3(cube_shader, "directional_light.diffuse", directional_light.diffuse_color);
+        ShaderSetVec3(cube_shader, "directional_light.specular", directional_light.specular_color);
+
+        ShaderSetVec3(cube_shader, "spot_light.position", spot_light.position);
+        ShaderSetVec3(cube_shader, "spot_light.direction", spot_light.direction);
+        ShaderSetVec3(cube_shader, "spot_light.ambient", spot_light.ambient_color);
+        ShaderSetVec3(cube_shader, "spot_light.diffuse", spot_light.diffuse_color);
+        ShaderSetVec3(cube_shader, "spot_light.specular", spot_light.specular_color);
+        ShaderSetFloat(cube_shader, "spot_light.inner_cutoff", spot_light.inner_cutoff);
+        ShaderSetFloat(cube_shader, "spot_light.outer_cutoff", spot_light.outer_cutoff);
+        ShaderSetFloat(cube_shader, "spot_light.constant", spot_light.constant);
+        ShaderSetFloat(cube_shader, "spot_light.linear", spot_light.linear);
+        ShaderSetFloat(cube_shader, "spot_light.quadratic", spot_light.quadratic);
+    }
 
     curr_time_seconds, prev_time_seconds, delta_time_seconds : float;
     exit := false;
