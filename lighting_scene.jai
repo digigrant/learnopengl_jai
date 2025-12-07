@@ -90,6 +90,7 @@ main :: () {
         using cube_mesh.material;
         diffuse_texture = BuildFromTextureLibrary("textures/container2.png", .DIFFUSE);
         specular_texture = BuildFromTextureLibrary("textures/container2_specular.png", .SPECULAR);
+        shininess = 32.0;
     }
     defer FreeMesh(*cube_mesh);
 
@@ -106,6 +107,29 @@ main :: () {
 
     cube_shader := CreateShader(CUBE_VERTEX_SHADER, CUBE_FRAGMENT_SHADER);
     light_shader := CreateShader(CUBE_VERTEX_SHADER, LIGHT_FRAGMENT_SHADER);
+
+    DirectionalLight :: struct {
+        direction : Vector3;    // this could also be a vec4 - w=0
+        ambient_color : Vector3;
+        diffuse_color : Vector3;
+        specular_color : Vector3;
+        name : string;
+    };
+
+    directional_light := DirectionalLight.{
+        name = "my_dir_light",
+        direction = .{ -0.2, -1.0, -0.3 },
+        ambient_color = .{0.2, 0.2, 0.2},
+        diffuse_color = .{0.5, 0.5, 0.5},
+        specular_color = .{1.0, 1.0, 1.0}
+    };
+
+    glUseProgram(cube_shader);
+    {
+        ShaderSetVec3(cube_shader, "directional_light.ambient", directional_light.ambient_color);
+        ShaderSetVec3(cube_shader, "directional_light.diffuse", directional_light.diffuse_color);
+        ShaderSetVec3(cube_shader, "directional_light.specular", directional_light.specular_color);
+    }
 
     curr_time_seconds, prev_time_seconds, delta_time_seconds : float;
     exit := false;
@@ -133,6 +157,8 @@ main :: () {
 
         glUseProgram(cube_shader);
         {
+            directional_light_view_dir : Vector3 = (view * make_vector4(directional_light.direction, 0.0)).xyz;
+            ShaderSetVec3(cube_shader, "directional_light.direction", directional_light_view_dir);
             cube_model : Matrix4;
             for cube_pos : CUBE_POSITIONS {
                 cube_model = Matrix4_Identity;
@@ -141,10 +167,12 @@ main :: () {
                 ShaderSetMat4(cube_shader, "model", *cube_model);
 
                 light_view_pos : Vector3 = (view * make_vector4(light_pos, 1.0)).xyz;
+                /*
                 ShaderSetVec3(cube_shader, "light.view_pos", light_view_pos);
                 ShaderSetVec3(cube_shader, "light.ambient", light_base_color * light_base_ambient);
                 ShaderSetVec3(cube_shader, "light.diffuse", light_base_color * light_base_diffuse);
                 ShaderSetVec3(cube_shader, "light.specular", light_base_color * light_base_specular);
+                */
                 DrawMesh(cube_mesh, cube_shader);
             }
             

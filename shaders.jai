@@ -315,7 +315,7 @@ out vec2 tex_coords;
 void main() {
     gl_Position = projection * view * model * vec4(aPos, 1.0);
     frag_view_pos = vec3(view * model * vec4(aPos, 1.0)); // change to view space
-    normal = vec3(view * vec4(aNormal, 0.0));
+    normal = vec3(view * model * vec4(aNormal, 0.0));
     tex_coords = aTexCoords;
 }
 DONE
@@ -383,17 +383,6 @@ struct SpotLight {
     vec3 specular;
 };
 uniform SpotLight spot_light;
-
-/*
-struct Light {
-    vec3 view_pos;
-
-    vec3 ambient;
-    vec3 diffuse;
-    vec3 specular;
-};
-uniform Light light;
-*/
 
 /*** Functions ***/
 vec3 CalculateDirectionalLight(DirectionalLight d_light, vec3 normal, vec3 view_dir) {
