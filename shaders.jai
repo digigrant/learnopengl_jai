@@ -450,13 +450,12 @@ vec3 CalculateSpotLight(SpotLight s_light, vec3 normal, vec3 frag_pos, vec3 view
 void main() {
     vec3 n_normal = normalize(normal);
     vec3 view_dir = normalize(-frag_view_pos);
-    // vec3 result = CalculateDirectionalLight(directional_light, n_normal, view_dir);
-    /*
+    vec3 result = vec3(0.0);
+    result += CalculateDirectionalLight(directional_light, n_normal, view_dir);
     for (int i = 0; i < NUMBER_POINT_LIGHTS; i++) {
         result += CalculatePointLight(point_lights[i], n_normal, frag_view_pos, view_dir);
     }
-    */
-    vec3 result = CalculateSpotLight(spot_light, n_normal, frag_view_pos, view_dir);
+    result += CalculateSpotLight(spot_light, n_normal, frag_view_pos, view_dir);
     fragment_color = vec4(result, 1.0);
 }
 DONE

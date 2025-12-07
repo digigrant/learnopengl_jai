@@ -86,7 +86,7 @@ POINT_LIGHT_COLORS : [4] Vector3 : .[
     .{ 1.0, 0.0, 0.0 },
     .{ 0.0, 1.0, 0.0 },
     .{ 0.0, 0.0, 1.0 },
-    .{ 1.0, 1.0, 1.0 }
+    .{ 1.0, 0.0, 1.0 }
 ];
 
 main :: () {
@@ -125,9 +125,9 @@ main :: () {
     directional_light := DirectionalLight.{
         name = "my_dir_light",
         direction = .{ -0.2, -1.0, -0.3 },
-        ambient_color = .{0.2, 0.2, 0.2},
-        diffuse_color = .{0.5, 0.5, 0.5},
-        specular_color = .{1.0, 1.0, 1.0}
+        ambient_color = .{0.2, 0.2, 0.0},
+        diffuse_color = .{0.5, 0.5, 0.0},
+        specular_color = .{1.0, 1.0, 0.0}
     };
 
     point_lights : [4] PointLight;
