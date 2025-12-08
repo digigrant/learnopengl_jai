@@ -12,9 +12,11 @@ Camera :: struct {
     right : Vector3;
     up : Vector3;
     front : Vector3;
-    worldUp : Vector3;
+    world_up : Vector3;
 
     fov : float;
+
+    event_queue : EventQueue;
 };
 
 PITCH_MAX :: #run DegToRad(89.0);
@@ -25,18 +27,39 @@ CreateCamera :: (initialPosition : Vector3 = .{0.0, 0.0, 0.0}, initialRotationDe
     camera := New(Camera);
     if camera == null return null;
 
-    camera.worldUp = worldUp;
-    camera.position = initialPosition;
-    camera.rotation = .{
+    using camera;
+
+    world_up = worldUp;
+    position = initialPosition;
+    rotation = .{
         DegToRad(initialRotationDeg.x),
         DegToRad(initialRotationDeg.y),
         DegToRad(initialRotationDeg.z)
     };
-    camera.fov = 45.0;
+    fov = 45.0;
 
     UpdateVectors(camera);
 
+    ListenForEventType(*event_queue, .INPUT_MOUSE_POSITION);
+
     return camera;
+}
+
+CameraUpdate :: (using camera : *Camera, delta_time_seconds : float) {
+    event : EventInfo;
+    while PollEvents(*event_queue, *event) {
+        if event.type == {
+            case .INPUT_MOUSE_POSITION; {
+                CAMERA_MOTION_MULTIPLIER :: 0.1;
+                data := cast(*EventData_MousePosition) event.data;
+                CameraRotate(camera, .{
+                    -data.y_relative * CAMERA_MOTION_MULTIPLIER,
+                     data.x_relative * CAMERA_MOTION_MULTIPLIER
+                });
+            }
+            case; print("Unexpected event type: %\n", event.type);
+        }
+    }
 }
 
 FreeCamera :: (camera : **Camera) {
@@ -82,8 +105,8 @@ UpdateVectors :: (using camera : *Camera) {
         sin(yaw) * cos(pitch)
     };
 
-    // next calculate right vector using front and worldUp
-    right = normalize(cross(worldUp, -front));
+    // next calculate right vector using front and world_up
+    right = normalize(cross(world_up, -front));
 
     // finally calculate actual up vector
     up = normalize(cross(-front, right));

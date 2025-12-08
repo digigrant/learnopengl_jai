@@ -98,11 +98,13 @@ main :: () {
     camera := CreateCamera(.{ 0.0, 0.0, 3.0});
     defer FreeCamera(*camera);
 
+    /*
     my_event_queue : EventQueue;
     ListenForEventType(*my_event_queue, .CAMERA_MOVE);
     NotifyEvent(.CAMERA_MOVE);
     NotifyEvent(.CAMERA_MOVE);
     print("my_event_queue: %\n", my_event_queue);
+    */
 
     cube_mesh := CreateMesh("cube", .{ CUBE_VERTICES, CUBE_VERTEX_ATTRIBUTES });
     cube_mesh.material = BuildFromMaterialibrary("container");
@@ -192,10 +194,7 @@ main :: () {
 
         ProcessInput(*exit, delta_time_seconds, camera);
 
-        event : EventInfo;
-        while PollEvents(*my_event_queue, *event) {
-            print("new event: %\n", event.type);
-        }
+        CameraUpdate(camera, delta_time_seconds);
 
         SetupRenderSceneToFrameBuffer();
 
@@ -253,6 +252,8 @@ main :: () {
         }
 
         RenderFrameBufferToScreen();
+
+        reset_temporary_storage();
     }
 
     ShutdownAllSystems();

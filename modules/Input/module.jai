@@ -4,6 +4,7 @@
 
 #import "Graphics"; // only need this for Camera. Should be removed.
 #import "GL";       // only needed for window resize. should be removed.
+#import "Extra_Stuff"; // events
 
 // global consts
 #if OS == {
@@ -60,8 +61,6 @@ Shutdown :: () {
 // "Game Engine Architecture" might shed some light on what should live here
 // (It didnt)
 
-
-// @TODO: also things in this function should be scaled by delta time, I will fix this
 ProcessInput :: (exit : *bool, deltaTimeSeconds : float, camera : *Camera) {
     // poll events
     event : SDL_Event;
@@ -83,10 +82,12 @@ ProcessInput :: (exit : *bool, deltaTimeSeconds : float, camera : *Camera) {
                 RefreshJoysticks();
             
             case SDL_MOUSEMOTION;
-                xoffset := event.motion.xrel * 0.1;
-                yoffset := event.motion.yrel * 0.1;
-                CameraRotate(camera, .{-yoffset, xoffset});
-
+                event_data := cast(*EventData_MousePosition) temporary_alloc(size_of(EventData_MousePosition));
+                event_data.* = .{
+                    x_relative = event.motion.xrel,
+                    y_relative = event.motion.yrel
+                };
+                NotifyEvent(.INPUT_MOUSE_POSITION, event_data);
         }
     }
 
