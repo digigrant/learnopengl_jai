@@ -25,6 +25,16 @@ HeapPop :: (heap_view : *[] $T, fp_Compare : (a : *T, b : *T) -> int) -> max_ele
     return max_element;
 }
 
+HeapAdd :: (heap_view : *[] $T, fp_Compare : (a : *T, b : *T) -> int, value : *T) {
+    // right now we're trusting that whoever is calling this function has already checked that
+    // there is enough allocated space for us to add what we want
+    // if that's not true, we're about to overwrite OOB memory. ~~~YIKES!~~~
+
+    heap_view.count += 1;
+    memcpy(*(heap_view.*[heap_view.count-1]), value, size_of(T));
+    BubbleUp(heap_view.*, fp_Compare, heap_view.count-1);
+}
+
 PrintHeap :: (array : [] $T, fp_PrintElement : (element : *T)) {
     print("Printing heap:\n");
     PrintHeapElement(array, fp_PrintElement, 0);
@@ -51,6 +61,13 @@ BubbleDown :: (array : [] $T, fp_Compare : (a : *T, b : *T) -> int, i : int) {
         swap(*(array[i]), *(array[max_index]));
         BubbleDown(array, fp_Compare, max_index);
     }
+}
+
+BubbleUp :: (array : [] $T, fp_Compare : (a : *T, b : *T) -> int, i : int) {
+    if i == 0 || fp_Compare(*(array[i]), *(array[GetParentIndex(i)])) <= 0 return;
+    parent_index := GetParentIndex(i);
+    swap(*(array[i]), *(array[parent_index]));
+    BubbleUp(array, fp_Compare, parent_index);
 }
 
 PrintHeapElement :: (array : [] $T, fp_PrintElement : (element : *T), i : int) {
