@@ -105,6 +105,7 @@ ProcessInput :: (exit : *bool, deltaTimeSeconds : float, camera : *Camera) {
     if keyboardState[SDL_Scancode.SDL_SCANCODE_Q] ApplyMovement(*translation, .{y=-1.0}, *movementKeyPressed);
     if keyboardState[SDL_Scancode.SDL_SCANCODE_R] ApplyZoom(*zoom,  1.0, *zoomKeyPressed);
     if keyboardState[SDL_Scancode.SDL_SCANCODE_F] ApplyZoom(*zoom, -1.0, *zoomKeyPressed);
+    if keyboardState[SDL_Scancode.SDL_SCANCODE_Z] NotifyEvent(.INPUT_KEYBOARD_Z);
 
     // Gamepad input
     if joysticks.count > 0 {

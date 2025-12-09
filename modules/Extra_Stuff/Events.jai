@@ -15,6 +15,7 @@ EventQueue :: struct {
 EventType :: enum u8 { //correlates to index in dispatch registry?
     NONE         :: 0;
     INPUT_MOUSE_POSITION :: 1;
+    INPUT_KEYBOARD_Z :: 2;
 };
 // system events could use upper range (128-255) and local event systems use lower range, potentially, or vice versa
 

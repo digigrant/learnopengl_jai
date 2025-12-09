@@ -89,6 +89,15 @@ POINT_LIGHT_COLORS : [4] Vector3 : .[
     .{ 1.0, 0.0, 1.0 }
 ];
 
+flashlight_changed := false;
+flashlight_on : = false;
+z_down_prev, z_down_current : bool = false;
+
+ToggleFlashlight :: (reset : bool = false) {
+    flashlight_on = !flashlight_on & !reset;
+    flashlight_changed = true;
+}
+
 main :: () {
     InitAllSystems();
 
@@ -97,14 +106,9 @@ main :: () {
 
     camera := CreateCamera(.{ 0.0, 0.0, 3.0});
     defer FreeCamera(*camera);
-
-    /*
-    my_event_queue : EventQueue;
-    ListenForEventType(*my_event_queue, .CAMERA_MOVE);
-    NotifyEvent(.CAMERA_MOVE);
-    NotifyEvent(.CAMERA_MOVE);
-    print("my_event_queue: %\n", my_event_queue);
-    */
+    
+    flashlight_event_queue : EventQueue;
+    ListenForEventType(*flashlight_event_queue, .INPUT_KEYBOARD_Z);
 
     cube_mesh := CreateMesh("cube", .{ CUBE_VERTICES, CUBE_VERTEX_ATTRIBUTES });
     cube_mesh.material = BuildFromMaterialibrary("container");
@@ -172,11 +176,11 @@ main :: () {
         ShaderSetVec3(cube_shader, "directional_light.diffuse", directional_light.diffuse_color);
         ShaderSetVec3(cube_shader, "directional_light.specular", directional_light.specular_color);
 
+        ShaderSetVec3(cube_shader, "spot_light.ambient", .{ 0.0, 0.0, 0.0 });
+        ShaderSetVec3(cube_shader, "spot_light.diffuse", .{ 0.0, 0.0, 0.0 });
+        ShaderSetVec3(cube_shader, "spot_light.specular", .{ 0.0, 0.0, 0.0 });
         ShaderSetVec3(cube_shader, "spot_light.position", spot_light.position);
         ShaderSetVec3(cube_shader, "spot_light.direction", spot_light.direction);
-        ShaderSetVec3(cube_shader, "spot_light.ambient", spot_light.ambient_color);
-        ShaderSetVec3(cube_shader, "spot_light.diffuse", spot_light.diffuse_color);
-        ShaderSetVec3(cube_shader, "spot_light.specular", spot_light.specular_color);
         ShaderSetFloat(cube_shader, "spot_light.inner_cutoff", spot_light.inner_cutoff);
         ShaderSetFloat(cube_shader, "spot_light.outer_cutoff", spot_light.outer_cutoff);
         ShaderSetFloat(cube_shader, "spot_light.constant", spot_light.constant);
@@ -195,6 +199,22 @@ main :: () {
         ProcessInput(*exit, delta_time_seconds, camera);
 
         CameraUpdate(camera, delta_time_seconds);
+
+        {
+            flashlight_changed = false;
+            z_down_current = false;
+            event : EventInfo;
+            while PollEvents(*flashlight_event_queue, *event) {
+                if event.type == {
+                    case .INPUT_KEYBOARD_Z; z_down_current = true;
+                    case; continue;
+                }
+            }
+
+            print("z_down_current: %\tz_down_prev: %\n", z_down_current, z_down_prev);
+            if z_down_current && !z_down_prev ToggleFlashlight();
+            z_down_prev = z_down_current;
+        }
 
         SetupRenderSceneToFrameBuffer();
 
@@ -226,6 +246,28 @@ main :: () {
                 ShaderSetFloat(cube_shader, sprint("point_lights[%].linear", i),    p_light.linear);
                 ShaderSetFloat(cube_shader, sprint("point_lights[%].quadratic", i), p_light.quadratic);
             }
+
+            if flashlight_changed {
+                if flashlight_on {
+                    ShaderSetVec3(cube_shader, "spot_light.ambient", spot_light.ambient_color);
+                    ShaderSetVec3(cube_shader, "spot_light.diffuse", spot_light.diffuse_color);
+                    ShaderSetVec3(cube_shader, "spot_light.specular", spot_light.specular_color);
+                } else {
+                    ShaderSetVec3(cube_shader, "spot_light.ambient", .{ 0.0, 0.0, 0.0 });
+                    ShaderSetVec3(cube_shader, "spot_light.diffuse", .{ 0.0, 0.0, 0.0 });
+                    ShaderSetVec3(cube_shader, "spot_light.specular", .{ 0.0, 0.0, 0.0 });
+                }
+            }
+
+            if flashlight_on {
+            ShaderSetVec3(cube_shader, "spot_light.ambient", spot_light.ambient_color);
+            ShaderSetVec3(cube_shader, "spot_light.diffuse", spot_light.diffuse_color);
+            ShaderSetVec3(cube_shader, "spot_light.specular", spot_light.specular_color);
+        } else {
+            ShaderSetVec3(cube_shader, "spot_light.ambient", .{ 0.0, 0.0, 0.0 });
+            ShaderSetVec3(cube_shader, "spot_light.diffuse", .{ 0.0, 0.0, 0.0 });
+            ShaderSetVec3(cube_shader, "spot_light.specular", .{ 0.0, 0.0, 0.0 });
+        }
 
             // draw cubes
             cube_model : Matrix4;
