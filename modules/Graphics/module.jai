@@ -71,8 +71,8 @@ Init :: () -> ok : bool {
     // we should check that it was initialized correctly.... but i dont know how
 
     InitFrameBuffer();
-    InitMaterialLibrary();
     InitTextureLibrary();
+    InitMaterialLibrary();
     InitUniformBufferRegistry();
 
     return true;

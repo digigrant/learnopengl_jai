@@ -320,6 +320,28 @@ void main() {
 }
 DONE
 
+BASIC_FRAGMENT_SHADER :: #string DONE
+#version 330 core
+in vec2 tex_coords;
+
+out vec4 FragColor;
+
+struct Material {
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+    float shininess;
+
+    sampler2D diffuse_map;
+    sampler2D specular_map;
+};
+uniform Material material;
+
+void main() {
+    FragColor = texture(material.diffuse_map, tex_coords);
+}
+DONE
+
 CUBE_FRAGMENT_SHADER :: #string DONE
 #version 330 core
 in vec3 frag_view_pos;
@@ -334,12 +356,7 @@ struct Material {
     vec3 diffuse;
     vec3 specular;
     float shininess;
-
-    /*
-        The streets say you should use a 1x1 white texture by default
-        so you are always sampling a texture, and there are no branches.
-        I guess we should do that
-    */
+    
     sampler2D diffuse_map;
     sampler2D specular_map;
 };
@@ -416,7 +433,6 @@ vec3 CalculatePointLight(PointLight p_light, vec3 normal, vec3 frag_pos, vec3 vi
     return (ambient + diffuse + specular) * attenuation;
 }
 
-// double check this. we /tired/!
 vec3 CalculateSpotLight(SpotLight s_light, vec3 normal, vec3 frag_pos, vec3 view_dir) {
     vec3 light_dir = normalize(s_light.position - frag_pos);
     

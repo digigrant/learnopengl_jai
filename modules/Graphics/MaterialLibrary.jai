@@ -25,7 +25,7 @@ InitMaterialLibrary :: (import_basic := true) {
 ImportFileToMaterialLibrary :: (path : string) {
     materials_file, ok := read_entire_file(path);
     if !ok {
-        print("No materials file found at '%'.\n");
+        print("No materials file found at '%'.\n", path);
         return;
     }
 
@@ -46,7 +46,7 @@ ImportFileToMaterialLibrary :: (path : string) {
     }
 }
 
-BuildFromMaterialibrary :: (name : string) -> material : *Material {
+BuildFromMaterialLibrary :: (name : string) -> material : *Material {
     assert(name != "");
 
     material := FindFromMaterialLibrary(name);

@@ -19,6 +19,9 @@ InitTextureLibrary :: () {
     for diffuse_list it = null;
     for specular_list it = null;
     diffuse_count, specular_count = 0;
+
+    BuildFromTextureLibrary("textures/white_pixel.jpg", .DIFFUSE);
+    BuildFromTextureLibrary("textures/white_pixel.jpg", .SPECULAR);
 }
 
 BuildFromTextureLibrary :: (path : string, texture_type : TextureType) -> texture : *Texture {

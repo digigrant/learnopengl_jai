@@ -210,8 +210,7 @@ main :: () {
                     case; continue;
                 }
             }
-
-            print("z_down_current: %\tz_down_prev: %\n", z_down_current, z_down_prev);
+            
             if z_down_current && !z_down_prev ToggleFlashlight();
             z_down_prev = z_down_current;
         }
