@@ -117,10 +117,10 @@ main :: () {
     // technically light mesh and cube mesh can use the same VBO and different VAOs
     // can we think of an elegant way to communicate this to the Graphics module?
     // it would save us a buffer
-    light_mesh := CreateMesh("light", .{ CUBE_VERTICES, CUBE_VERTEX_ATTRIBUTES});
+    light_mesh := CreateMesh("light", .{ CUBE_VERTICES, CUBE_VERTEX_ATTRIBUTES });
     defer FreeMesh(*light_mesh);
 
-    cube_shader := CreateShader(CUBE_VERTEX_SHADER, CUBE_FRAGMENT_SHADER);
+    cube_shader := CreateShader(CUBE_VERTEX_SHADER, BLINN_CUBE_FRAGMENT_SHADER);
     light_shader := CreateShader(CUBE_VERTEX_SHADER, LIGHT_FRAGMENT_SHADER);
 
     point_lights : [1] PointLight;
@@ -135,7 +135,6 @@ main :: () {
         linear = 0.09;
         quadratic = 0.032;
     }
-    print("%\n", point_lights);
 
     // these lighting uniforms dont change from frame to frame so we can set them here
     glUseProgram(cube_shader);
@@ -143,7 +142,9 @@ main :: () {
         plane_model := Matrix4_Identity;
         ShaderSetMat4(cube_shader, "model", *plane_model);
             
-        ShaderSetInt(cube_shader, "blinn", xx blinn);
+        ShaderSetBool(cube_shader, "blinn", blinn);
+
+        ShaderSetInt(cube_shader, "num_point_lights", point_lights.count);
         for p_light, i : point_lights {
             ShaderSetVec3(cube_shader, sprint("point_lights[%].ambient", i),    p_light.ambient_color);
             ShaderSetVec3(cube_shader, sprint("point_lights[%].diffuse", i),    p_light.diffuse_color);

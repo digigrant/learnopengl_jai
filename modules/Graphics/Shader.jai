@@ -78,6 +78,10 @@ CreateShader :: (vertexShaderCode : string, fragmentShaderCode : string, geometr
     return shader;
 }
 
+ShaderSetBool :: (shaderId : u32, name : string, value : bool) {
+    glUniform1i(glGetUniformLocation(shaderId, to_c_string(name)), xx value);
+}
+
 ShaderSetInt :: (shaderId : u32, name : string, value : GLint) {
     glUniform1i(glGetUniformLocation(shaderId, to_c_string(name)), value);
 }
