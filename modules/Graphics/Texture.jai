@@ -29,15 +29,22 @@ CreateTexture :: (texture_path : string, texture_type : TextureType) -> texture 
     type = texture_type;
     glGenTextures(1, *id);
 
+    internal_format : GLint;
     format : GLenum;
     if nrChannels == {
-        case 1; format = GL_RED;
-        case 3; format = GL_RGB;
-        case 4; format = GL_RGBA;
+        case 1; internal_format, format = GL_RED;
+        case 3; {
+            internal_format = cast(GLint) ifx texture_type == .DIFFUSE then GL_SRGB else GL_RGB;
+            format = GL_RGB;
+        }
+        case 4; {
+            internal_format = cast(GLint) ifx texture_type == .DIFFUSE then GL_SRGB_ALPHA else GL_RGBA;
+            format = GL_RGBA;
+        }
     }
 
     glBindTexture(GL_TEXTURE_2D, id);
-    glTexImage2D(GL_TEXTURE_2D, 0, xx format, width.(u32), height.(u32), 0, format, GL_UNSIGNED_BYTE, data);
+    glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width.(u32), height.(u32), 0, format, GL_UNSIGNED_BYTE, data);
     glGenerateMipmap(GL_TEXTURE_2D);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,

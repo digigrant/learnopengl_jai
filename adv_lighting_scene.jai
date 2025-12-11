@@ -75,12 +75,18 @@ PLANE_VERTICES : [48] float : .[
 
 PLANE_VERTEX_ATTRIBUTES : [3] VertexAttribute : .[.{3}, .{3}, .{2} ];
 
-POINT_LIGHT_POSITIONS : [1] Vector3 : .[
-    .{  0.0,  0.0,  0.0  }
+POINT_LIGHT_POSITIONS : [4] Vector3 : .[
+    .{ -3.0,  0.0,  0.0  },
+    .{ -1.0,  0.0,  0.0  },
+    .{  1.0,  0.0,  0.0  },
+    .{  3.0,  0.0,  0.0  }
 ];
 
-POINT_LIGHT_COLORS : [1] Vector3 : .[
-    .{ 1.0, 1.0, 1.0 }
+POINT_LIGHT_COLORS : [4] Vector3 : .[
+    .{ 0.25, 0.25, 0.25 },
+    .{ 0.50, 0.50, 0.50 },
+    .{ 0.75, 0.75, 0.75 },
+    .{ 1.00, 1.00, 1.00 }
 ];
 
 blinn := true;
@@ -97,6 +103,7 @@ main :: () {
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
+    // glEnable(GL_FRAMEBUFFER_SRGB);   // ez gamma correction
 
     blinn_event_queue : EventQueue;
     ListenForEventType(*blinn_event_queue, .INPUT_KEYBOARD_Z);
@@ -110,7 +117,7 @@ main :: () {
         using plane_mesh.material;
         diffuse_texture = BuildFromTextureLibrary("textures/wood.png", .DIFFUSE);
         specular_texture = BuildFromTextureLibrary("textures/white_pixel.jpg", .SPECULAR);
-        shininess = 8.0;
+        shininess = 32.0;
     }
     defer FreeMesh(*plane_mesh);
 
@@ -123,7 +130,7 @@ main :: () {
     cube_shader := CreateShader(CUBE_VERTEX_SHADER, BLINN_CUBE_FRAGMENT_SHADER);
     light_shader := CreateShader(CUBE_VERTEX_SHADER, LIGHT_FRAGMENT_SHADER);
 
-    point_lights : [1] PointLight;
+    point_lights : [#run POINT_LIGHT_POSITIONS.count] PointLight;
     for * p_light, i : point_lights {
         using p_light;
         name = sprint("point_light_%", i);
@@ -208,6 +215,7 @@ main :: () {
             DrawMesh(plane_mesh, cube_shader);
         }
 
+        /*
         glUseProgram(light_shader);
         {
             light_model : Matrix4;
@@ -220,6 +228,7 @@ main :: () {
                 DrawMesh(light_mesh, light_shader);
             }
         }
+        */
 
         RenderFrameBufferToScreen();
 

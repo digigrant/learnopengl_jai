@@ -7,6 +7,14 @@ intermediate_color_buffer   : GLuint;
 screen_vao      : GLuint;
 screen_shader   : GLuint;
 
+GAMMA_CORRECTION :: 2.2;
+CLEAR_COLOR_RGB :: Vector3.{0.1, 0.1, 0.1};
+CLEAR_COLOR_SRGB :: #run Vector3.{
+    pow(CLEAR_COLOR_RGB.x, GAMMA_CORRECTION),
+    pow(CLEAR_COLOR_RGB.y, GAMMA_CORRECTION),
+    pow(CLEAR_COLOR_RGB.z, GAMMA_CORRECTION)
+};
+
 // screen vertex data
 SCREEN_VERTICES : [24] float : .[
     -1.0, -1.0, 0.0, 0.0,
@@ -45,6 +53,8 @@ uniform sampler2D screenTexture;
 
 void main() {
     FragColor = texture(screenTexture, TexCoords);
+    float gamma = 2.2;
+    FragColor.rgb = pow(FragColor.rgb, vec3(1.0/gamma));
 }
 DONE
 
@@ -127,7 +137,7 @@ InitFrameBuffer :: () {
 // set up first render pass to the frame buffer
 SetupRenderSceneToFrameBuffer :: () {
     glBindFramebuffer(GL_FRAMEBUFFER, multisample_frame_buffer);
-    glClearColor(0.1, 0.1, 0.1, 1.0);
+    glClearColor(CLEAR_COLOR_SRGB.x, CLEAR_COLOR_SRGB.y, CLEAR_COLOR_SRGB.z, 1.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
 }

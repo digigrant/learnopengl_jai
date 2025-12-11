@@ -560,7 +560,7 @@ vec3 CalculatePointLight(PointLight p_light, vec3 normal, vec3 frag_pos, vec3 vi
     float specular_amount = 0.0;
     if (blinn) {
         vec3 halfway_dir = normalize(light_dir + view_dir);
-        specular_amount = pow(max(dot(halfway_dir, normal), 0.0), material.shininess * 2.0);
+        specular_amount = pow(max(dot(normal, halfway_dir), 0.0), material.shininess * 2.0);
     } else {
         vec3 reflect_dir = reflect(-light_dir, normal);
         specular_amount = pow(max(dot(view_dir, reflect_dir), 0.0), material.shininess);
@@ -571,8 +571,8 @@ vec3 CalculatePointLight(PointLight p_light, vec3 normal, vec3 frag_pos, vec3 vi
     vec3 specular = p_light.specular * specular_amount * vec3(texture(material.specular_map, tex_coords));
 
     float distance = length(p_light.position - frag_pos);
-    float attenuation = 1.0 / (p_light.constant + (p_light.linear * distance) + 
-        (p_light.quadratic * distance * distance));
+    //float attenuation = 1.0 / (p_light.constant + (p_light.linear * distance)); // + (p_light.quadratic * distance * distance));
+    float attenuation = 1.0 / distance * distance; // + (p_light.quadratic * distance * distance));
 
     return (ambient + diffuse + specular) * attenuation;
 }
