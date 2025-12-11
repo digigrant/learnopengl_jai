@@ -215,7 +215,6 @@ main :: () {
             DrawMesh(plane_mesh, cube_shader);
         }
 
-        /*
         glUseProgram(light_shader);
         {
             light_model : Matrix4;
@@ -228,7 +227,6 @@ main :: () {
                 DrawMesh(light_mesh, light_shader);
             }
         }
-        */
 
         RenderFrameBufferToScreen();
 

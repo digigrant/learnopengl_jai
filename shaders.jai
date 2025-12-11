@@ -568,7 +568,7 @@ vec3 CalculatePointLight(PointLight p_light, vec3 normal, vec3 frag_pos, vec3 vi
 
     vec3 ambient = p_light.ambient * vec3(texture(material.diffuse_map, tex_coords));
     vec3 diffuse = p_light.diffuse * diffuse_amount * vec3(texture(material.diffuse_map, tex_coords));
-    vec3 specular = p_light.specular * specular_amount * vec3(texture(material.specular_map, tex_coords));
+    vec3 specular = p_light.specular * specular_amount * vec3(texture(material.diffuse_map, tex_coords));
 
     float distance = length(p_light.position - frag_pos);
     //float attenuation = 1.0 / (p_light.constant + (p_light.linear * distance)); // + (p_light.quadratic * distance * distance));
