@@ -1,9 +1,8 @@
-// event containers
-// features we want
-// event emitters cn broadcast eevnts without giving a shit who (if anyone) is listening
-// things can listen for events
-
 #import "Graphics";
+#import "Extra_Stuff";
+#import "Basic";
+
+#load "EventTypes.jai";
 
 #scope_export   // PUBLIC STRUCTS
 
@@ -12,11 +11,6 @@ EventQueue :: struct {
     count : u8;
 };
 
-EventType :: enum u8 { //correlates to index in dispatch registry?
-    NONE         :: 0;
-    INPUT_MOUSE_POSITION :: 1;
-    INPUT_KEYBOARD_Z :: 2;
-};
 // system events could use upper range (128-255) and local event systems use lower range, potentially, or vice versa
 
 EventPriority :: enum u8 {

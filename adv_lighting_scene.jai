@@ -5,6 +5,7 @@
 
 using,except (Init, Shutdown) Graphics :: #import "Graphics";
 using,except (Init, Shutdown) Input :: #import "Input";
+#import "Events";
 
 #load "shaders.jai";
 
@@ -91,7 +92,6 @@ POINT_LIGHT_COLORS : [4] Vector3 : .[
 
 blinn := true;
 blinn_changed := false;
-blinn_key_current, blinn_key_prev := false;
 
 ToggleBlinn :: () {
     blinn = !blinn;
@@ -106,7 +106,7 @@ main :: () {
     // glEnable(GL_FRAMEBUFFER_SRGB);   // ez gamma correction
 
     blinn_event_queue : EventQueue;
-    ListenForEventType(*blinn_event_queue, .INPUT_KEYBOARD_Z);
+    ListenForEventType(*blinn_event_queue, .INPUT_KEYBOARD_Z_PRESSED);
 
     camera := CreateCamera(.{ 0.0, 0.0, 3.0});
     defer FreeCamera(*camera);
@@ -173,17 +173,13 @@ main :: () {
         ProcessInput(*exit, delta_time_seconds, camera);
 
         {
-            blinn_key_current = false;
             event : EventInfo;
             while PollEvents(*blinn_event_queue, *event) {
                 if event.type == {
-                    case .INPUT_KEYBOARD_Z; blinn_key_current = true;
+                    case .INPUT_KEYBOARD_Z_PRESSED; ToggleBlinn();
                     case; continue;
                 }
             }
-
-            if blinn_key_current && !blinn_key_prev ToggleBlinn();
-            blinn_key_prev = blinn_key_current;
         }
 
         CameraUpdate(camera, delta_time_seconds);

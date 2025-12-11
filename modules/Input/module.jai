@@ -4,7 +4,7 @@
 
 #import "Graphics"; // only need this for Camera. Should be removed.
 #import "GL";       // only needed for window resize. should be removed.
-#import "Extra_Stuff"; // events
+#import "Events";
 
 // global consts
 #if OS == {
@@ -29,7 +29,9 @@ JOYSTICK_DEADZONE       :: 3200 / S16_MAX.(float);
 TRIGGER_DEADZONE        :: 0.01;
 
 // global variables
-keyboardState : *u8;
+keyboard_state : *u8;
+keyboard_state_prev : *u8;
+keyboard_state_length : s32;
 joysticks : [..] *SDL_Joystick;
 
 Init :: () -> ok : bool {
@@ -38,11 +40,13 @@ Init :: () -> ok : bool {
         return false;
     }
 
-    keyboardState = SDL_GetKeyboardState(null); // get pointer to array of keyboard states; doesn't need to change for lifetime of program
-    if !keyboardState {
+    keyboard_state = SDL_GetKeyboardState(*keyboard_state_length); // get pointer to array of keyboard states; doesn't need to change for lifetime of program
+    if !keyboard_state {
         print("Could not get keyboard state array.\n");
         return false;
     }
+    keyboard_state_prev = alloc(keyboard_state_length);
+    memset(keyboard_state_prev, 0, keyboard_state_length);
 
     // set mouse capture settings
     SDL_ShowCursor(0); // there's no SDL_DISABLE enum?????? 
@@ -97,15 +101,25 @@ ProcessInput :: (exit : *bool, deltaTimeSeconds : float, camera : *Camera) {
     translation : Vector3;
     zoom : float;
 
-    if keyboardState[SDL_Scancode.SDL_SCANCODE_W] ApplyMovement(*translation, .{z=1.0}, *movementKeyPressed);
-    if keyboardState[SDL_Scancode.SDL_SCANCODE_S] ApplyMovement(*translation, .{z=-1.0}, *movementKeyPressed);
-    if keyboardState[SDL_Scancode.SDL_SCANCODE_A] ApplyMovement(*translation, .{x=-1.0}, *movementKeyPressed);
-    if keyboardState[SDL_Scancode.SDL_SCANCODE_D] ApplyMovement(*translation, .{x=1.0}, *movementKeyPressed);
-    if keyboardState[SDL_Scancode.SDL_SCANCODE_E] ApplyMovement(*translation, .{y=1.0}, *movementKeyPressed);
-    if keyboardState[SDL_Scancode.SDL_SCANCODE_Q] ApplyMovement(*translation, .{y=-1.0}, *movementKeyPressed);
-    if keyboardState[SDL_Scancode.SDL_SCANCODE_R] ApplyZoom(*zoom,  1.0, *zoomKeyPressed);
-    if keyboardState[SDL_Scancode.SDL_SCANCODE_F] ApplyZoom(*zoom, -1.0, *zoomKeyPressed);
-    if keyboardState[SDL_Scancode.SDL_SCANCODE_Z] NotifyEvent(.INPUT_KEYBOARD_Z);
+    if keyboard_state[SDL_Scancode.SDL_SCANCODE_W] ApplyMovement(*translation, .{z=1.0}, *movementKeyPressed);
+    if keyboard_state[SDL_Scancode.SDL_SCANCODE_S] ApplyMovement(*translation, .{z=-1.0}, *movementKeyPressed);
+    if keyboard_state[SDL_Scancode.SDL_SCANCODE_A] ApplyMovement(*translation, .{x=-1.0}, *movementKeyPressed);
+    if keyboard_state[SDL_Scancode.SDL_SCANCODE_D] ApplyMovement(*translation, .{x=1.0}, *movementKeyPressed);
+    if keyboard_state[SDL_Scancode.SDL_SCANCODE_E] ApplyMovement(*translation, .{y=1.0}, *movementKeyPressed);
+    if keyboard_state[SDL_Scancode.SDL_SCANCODE_Q] ApplyMovement(*translation, .{y=-1.0}, *movementKeyPressed);
+    if keyboard_state[SDL_Scancode.SDL_SCANCODE_R] ApplyZoom(*zoom,  1.0, *zoomKeyPressed);
+    if keyboard_state[SDL_Scancode.SDL_SCANCODE_F] ApplyZoom(*zoom, -1.0, *zoomKeyPressed);
+    if keyboard_state[SDL_Scancode.SDL_SCANCODE_Z] && !keyboard_state_prev[SDL_Scancode.SDL_SCANCODE_Z] NotifyEvent(.INPUT_KEYBOARD_Z_PRESSED);
+
+    // check every single key and send appropriate events 
+    /*
+    for 0..keyboard_state_length-1 {
+        if 
+    }
+    */
+
+    // at the end of keyboard input, we must copy keyboard_state to keyboard_state_prev
+    memcpy(keyboard_state_prev, keyboard_state, keyboard_state_length * size_of(u8));
 
     // Gamepad input
     if joysticks.count > 0 {
