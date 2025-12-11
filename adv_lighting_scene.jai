@@ -110,7 +110,7 @@ main :: () {
         using plane_mesh.material;
         diffuse_texture = BuildFromTextureLibrary("textures/wood.png", .DIFFUSE);
         specular_texture = BuildFromTextureLibrary("textures/white_pixel.jpg", .SPECULAR);
-        shininess = 32.0;
+        shininess = 8.0;
     }
     defer FreeMesh(*plane_mesh);
 
