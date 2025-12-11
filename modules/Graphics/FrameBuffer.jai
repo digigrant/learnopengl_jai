@@ -91,7 +91,7 @@ InitFrameBuffer :: () {
 
     // setup texture attachment
     glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, multisample_color_buffer);
-    glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, NUM_MULTISAMPLE_SAMPLES, GL_RGB, windowWidth, windowHeight, GL_TRUE);
+    glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, NUM_MULTISAMPLE_SAMPLES, GL_RGB12, windowWidth, windowHeight, GL_TRUE);
 
     // setup render buffer attachment
     glBindRenderbuffer(GL_RENDERBUFFER, multisample_render_buffer);
@@ -108,9 +108,8 @@ InitFrameBuffer :: () {
 
     /*** INTERMEDIATE FRAME BUFFER ***/
     glBindFramebuffer(GL_FRAMEBUFFER, intermediate_frame_buffer);
-
     glBindTexture(GL_TEXTURE_2D, intermediate_color_buffer);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, windowWidth, windowHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, null);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB12, windowWidth, windowHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, null);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 

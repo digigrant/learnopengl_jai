@@ -572,7 +572,7 @@ vec3 CalculatePointLight(PointLight p_light, vec3 normal, vec3 frag_pos, vec3 vi
 
     float distance = length(p_light.position - frag_pos);
     //float attenuation = 1.0 / (p_light.constant + (p_light.linear * distance)); // + (p_light.quadratic * distance * distance));
-    float attenuation = 1.0 / distance * distance; // + (p_light.quadratic * distance * distance));
+    float attenuation = 1.0 / (distance * distance); // + (p_light.quadratic * distance * distance));
 
     return (ambient + diffuse + specular) * attenuation;
 }
