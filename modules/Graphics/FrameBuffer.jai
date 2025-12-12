@@ -142,6 +142,7 @@ SetupRenderSceneToFrameBuffer :: () {
 }
 
 // set up and draw second render pass to screen
+// @TODO this really shouldnt be hardcoded to read from the multisample frame buffer
 RenderFrameBufferToScreen :: () {
     glBindFramebuffer(GL_READ_FRAMEBUFFER, multisample_frame_buffer);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, intermediate_frame_buffer);

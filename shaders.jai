@@ -679,6 +679,8 @@ out vec4 FragColor;
 in vec2 tex_coords;
 
 uniform sampler2D depth_map;
+uniform float near_plane;
+uniform float far_plane;
 
 void main() {
     float depth_value = texture(depth_map, tex_coords).r;
