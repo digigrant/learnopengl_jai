@@ -629,3 +629,59 @@ void main() {
     fragment_color = vec4(color, 1.0);
 }
 DONE
+
+/*** 
+ *
+ *
+ *
+    SHADOW MAPPING
+ *
+ *
+ *
+ *
+ ***/
+
+SIMPLE_DEPTH_VERTEX_SHADER :: #string DONE
+#version 330 core
+layout (location = 0) in vec3 aPos;
+
+uniform mat4 light_space;
+uniform mat4 model;
+
+void main() {
+    gl_Position = light_space * model * vec4(aPos, 1.0);
+}
+DONE
+
+SIMPLE_DEPTH_FRAGMENT_SHADER :: #string DONE
+#version 330 core
+
+void main() {}
+DONE
+
+DEPTH_QUAD_VERTEX_SHADER :: #string DONE
+#version 330 core
+layout (location = 0) in vec3 aPos;
+layout (location = 1) in vec2 aTexCoords;
+
+out vec2 tex_coords;
+
+void main() {
+    tex_coords = aTexCoords;
+    gl_Position = vec4(aPos, 1.0);
+}
+DONE
+
+DEPTH_QUAD_FRAGMENT_SHADER :: #string DONE
+#version 330 core
+out vec4 FragColor;
+
+in vec2 tex_coords;
+
+uniform sampler2D depth_map;
+
+void main() {
+    float depth_value = texture(depth_map, tex_coords).r;
+    FragColor = vec4(vec3(depth_value), 1.0);
+}
+DONE

@@ -63,15 +63,21 @@ CUBE_VERTICES : [288] float : .[
 
 CUBE_VERTEX_ATTRIBUTES : [3] VertexAttribute : .[.{3}, .{3}, .{2} ];
 
+CUBE_POSITIONS : [3] Vector3 : .[
+    .{  0.0, 1.5, 0.0 },
+    .{  2.0, 0.0, 1.0 },
+    .{ -1.0, 0.0, 2.0 }
+];
+
 PLANE_VERTICES : [48] float : .[
     // positions            // normals          // texcoords
-     10.0, -0.5,  10.0,     0.0, 1.0, 0.0,      10.0, 0.0,
-    -10.0, -0.5, -10.0,     0.0, 1.0, 0.0,      0.0, 10.0,
-    -10.0, -0.5,  10.0,     0.0, 1.0, 0.0,      0.0, 0.0,
+     25.0, -0.5,  25.0,     0.0, 1.0, 0.0,      25.0, 0.0,
+    -25.0, -0.5, -25.0,     0.0, 1.0, 0.0,      0.0, 25.0,
+    -25.0, -0.5,  25.0,     0.0, 1.0, 0.0,      0.0, 0.0,
 
-     10.0, -0.5,  10.0,     0.0, 1.0, 0.0,      10.0, 0.0,
-     10.0, -0.5, -10.0,     0.0, 1.0, 0.0,      10.0, 10.0,
-    -10.0, -0.5, -10.0,     0.0, 1.0, 0.0,      0.0, 10.0
+     25.0, -0.5,  25.0,     0.0, 1.0, 0.0,      25.0, 0.0,
+     25.0, -0.5, -25.0,     0.0, 1.0, 0.0,      25.0, 25.0,
+    -25.0, -0.5, -25.0,     0.0, 1.0, 0.0,      0.0, 25.0
 ];
 
 PLANE_VERTEX_ATTRIBUTES : [3] VertexAttribute : .[.{3}, .{3}, .{2} ];
@@ -97,6 +103,20 @@ ToggleBlinn :: () {
     blinn = !blinn;
     blinn_changed = true;
 }
+
+SHADOW_WIDTH    :: 1024;
+SHADOW_HEIGHT   :: 1024;
+
+LIGHT_POS :: Vector3.{-2.0, 4.0, -1.0};
+
+DEPTH_QUAD_VERTICES : [20] float : .[
+    -1.0,  1.0, 0.0, 0.0, 1.0,
+    -1.0, -1.0, 0.0, 0.0, 0.0,
+     1.0,  1.0, 0.0, 1.0, 1.0,
+     1.0, -1.0, 0.0, 1.0, 0.0,
+];
+
+DEPTH_QUAD_VERTEX_ATTRIBUTES : [2] VertexAttribute : .[ .{3}, .{2} ];
 
 main :: () {
     InitAllSystems();
@@ -124,6 +144,14 @@ main :: () {
     // technically light mesh and cube mesh can use the same VBO and different VAOs
     // can we think of an elegant way to communicate this to the Graphics module?
     // it would save us a buffer
+    cube_mesh := CreateMesh("cube", .{ CUBE_VERTICES, CUBE_VERTEX_ATTRIBUTES });
+    cube_mesh.material = BuildFromMaterialLibrary("cube_mat");
+    {
+        using cube_mesh.material;
+        diffuse_texture = BuildFromTextureLibrary("textures/marble.jpg", .DIFFUSE);
+        shininess = 32.0;
+    }
+    defer FreeMesh(*cube_mesh);
     light_mesh := CreateMesh("light", .{ CUBE_VERTICES, CUBE_VERTEX_ATTRIBUTES });
     defer FreeMesh(*light_mesh);
 
@@ -162,6 +190,34 @@ main :: () {
         }
     }
 
+    simple_depth_shader := CreateShader(SIMPLE_DEPTH_VERTEX_SHADER, SIMPLE_DEPTH_FRAGMENT_SHADER);
+
+    depth_map_fbo : GLuint;
+    depth_map_texture : GLuint;
+    {
+        glGenFramebuffers(1, *depth_map_fbo);
+
+        glGenTextures(1, *depth_map_texture);
+        glBindTexture(GL_TEXTURE_2D, depth_map_texture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, null);
+        // some other stuff we may not need
+    
+        glBindFramebuffer(GL_FRAMEBUFFER, depth_map_fbo);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depth_map_texture, 0);
+        glDrawBuffer(GL_NONE);  // we have to do this to specify that we dont want to draw color to the frame buffer
+        glReadBuffer(GL_NONE);  // same
+        if glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE {
+            print("ERROR::FRAMEBUFFER:: Depth framebuffer is not complete!");
+        }
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+
+    depth_quad_mesh := CreateMesh("depth_quad", .{DEPTH_QUAD_VERTICES, DEPTH_QUAD_VERTEX_ATTRIBUTES});
+
+    depth_quad_shader := CreateShader(DEPTH_QUAD_VERTEX_SHADER, DEPTH_QUAD_FRAGMENT_SHADER);
+    glUseProgram(depth_quad_shader);
+    ShaderSetInt(depth_quad_shader, "depth_map", 0);
+
     curr_time_seconds, prev_time_seconds, delta_time_seconds : float;
     exit := false;
     while !exit {
@@ -182,6 +238,52 @@ main :: () {
             }
         }
 
+        // light depth pass
+        glUseProgram(simple_depth_shader);
+        near_plane := 1.0;
+        far_plane := 7.5;
+        {
+            light_projection := orthographic_projection_matrix(-10.0, 10.0, -10.0, 10.0, near_plane, far_plane);
+            light_view := make_look_at_matrix(LIGHT_POS, make_vector3(0.0), .{0.0, 1.0, 0.0});
+            // lets remind ourselves here that matrices need to be transposed before being put into the shader. hee hoo
+            light_space := light_projection * light_view;
+            
+            ShaderSetMat4(simple_depth_shader, "light_space", *light_space);
+
+            // render
+            glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+            glBindFramebuffer(GL_FRAMEBUFFER, depth_map_fbo);
+            glClear(GL_DEPTH_BUFFER_BIT);
+
+            model := Matrix4_Identity;
+            ShaderSetMat4(simple_depth_shader, "model", *model);
+            DrawMesh(plane_mesh, simple_depth_shader);
+
+            for cube_pos : CUBE_POSITIONS {
+                model = Matrix4_Identity;
+                translate(*model, cube_pos);
+                if it_index == 2 RotateMatrix4(*model, #run DegToRad(60.0), #run normalize(Vector3.{1.0, 0.0, 1.0}));
+                scale(*model, ifx it_index != 2 then 0.5 else 0.25);
+                ShaderSetMat4(simple_depth_shader, "model", *model);
+                DrawMesh(cube_mesh, simple_depth_shader);
+            }
+
+            glBindFramebuffer(GL_FRAMEBUFFER, 0); // done rendering light depth pass
+        }
+
+        glViewport(0, 0, windowWidth, windowHeight);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        glUseProgram(depth_quad_shader);
+        ShaderSetFloat(depth_quad_shader, "near_plane", near_plane);
+        ShaderSetFloat(depth_quad_shader, "far_plane", far_plane);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, depth_map_texture);
+        DrawMesh(depth_quad_mesh, depth_quad_shader);
+
+        SwapBuffers();
+
+        /*
         CameraUpdate(camera, delta_time_seconds);
 
         SetupRenderSceneToFrameBuffer();
@@ -225,6 +327,7 @@ main :: () {
         }
 
         RenderFrameBufferToScreen();
+        */
 
         reset_temporary_storage();
     }

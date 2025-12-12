@@ -1,7 +1,12 @@
-#import "Graphics";
+#import "Graphics"; // get time milliseconds, really shouldnt be in there
 #import "Extra_Stuff";
 #import "Basic";
 
+// @TODO: I think eventually we would like this system to not need to define its own event types
+// Instead, anyone using the module can supply their own lists of events
+// They could be registered and merged at compile time into one unified list of event types
+// Not sure how that would work though since we want the compiler to help us check enum values
+// For now though we just have a separate data file of hardcoded event types
 #load "EventTypes.jai";
 
 #scope_export   // PUBLIC STRUCTS
