@@ -758,7 +758,8 @@ uniform sampler2D shadow_map;
 /*** Functions ***/
 float CalculateShadow(vec4 frag_pos_light_space) {
     // for perspective lights you need to divide by w but we're going to omit that here
-    vec3 proj_coords = frag_pos_light_space.xyz * 0.5 + 0.5; // we can omit this too if we adjust ortho matrix
+    vec3 proj_coords = frag_pos_light_space.xyz / frag_pos_light_space.w;
+    proj_coords = (proj_coords * 0.5) + 0.5; // we can omit this too if we adjust ortho matrix
     float closest_depth = texture(shadow_map, proj_coords.xy).r;
     float current_depth = proj_coords.z;
     return current_depth > closest_depth ? 1.0 : 0.0;
@@ -779,9 +780,9 @@ vec3 CalculateDirectionalLight(DirectionalLight d_light, vec3 normal, vec3 view_
     vec3 specular = d_light.specular * specular_amount * vec3(texture(material.specular_map, fs_in.tex_coords));
 
     
-    //float shadow = CalculateShadow(fs_in.frag_pos_light_space);
-    //return ambient + ((1.0 - shadow) * (diffuse + specular));
-    return ambient + diffuse + specular;
+    float shadow = CalculateShadow(fs_in.frag_pos_light_space);
+    return ambient + ((1.0 - shadow) * (diffuse + specular));
+    //return ambient + diffuse + specular;
 }
 
 void main() {

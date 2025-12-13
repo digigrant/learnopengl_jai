@@ -138,7 +138,6 @@ SetupRenderSceneToFrameBuffer :: () {
     glBindFramebuffer(GL_FRAMEBUFFER, multisample_frame_buffer);
     glClearColor(CLEAR_COLOR_SRGB.x, CLEAR_COLOR_SRGB.y, CLEAR_COLOR_SRGB.z, 1.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glEnable(GL_DEPTH_TEST);
 }
 
 // set up and draw second render pass to screen
@@ -162,4 +161,6 @@ RenderFrameBufferToScreen :: () {
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
     SwapBuffers();
+
+    glEnable(GL_DEPTH_TEST);
 }

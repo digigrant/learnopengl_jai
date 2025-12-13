@@ -149,13 +149,7 @@ main :: () {
     }
     // cube_shader := CreateShader(CUBE_VERTEX_SHADER, BLINN_CUBE_FRAGMENT_SHADER);
 
-    shadow_shader := CreateShader(SHADOW_VERTEX_SHADER, BLINN_SHADOW_FRAGMENT_SHADER);
-    {
-        glUseProgram(shadow_shader);
-        ShaderSetVec3(shadow_shader, "directional_light.ambient", DIRECTIONAL_LIGHT.ambient_color);
-        ShaderSetVec3(shadow_shader, "directional_light.diffuse", DIRECTIONAL_LIGHT.diffuse_color);
-        ShaderSetVec3(shadow_shader, "directional_light.specular", DIRECTIONAL_LIGHT.specular_color);
-    }
+    
 
     depth_map_fbo : GLuint;
     depth_map_texture : GLuint;
@@ -180,7 +174,14 @@ main :: () {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
-    
+    shadow_shader := CreateShader(SHADOW_VERTEX_SHADER, BLINN_SHADOW_FRAGMENT_SHADER);
+    {
+        glUseProgram(shadow_shader);
+        ShaderSetTexture2D(shadow_shader, "shadow_map", depth_map_texture, 2);
+        ShaderSetVec3(shadow_shader, "directional_light.ambient", DIRECTIONAL_LIGHT.ambient_color);
+        ShaderSetVec3(shadow_shader, "directional_light.diffuse", DIRECTIONAL_LIGHT.diffuse_color);
+        ShaderSetVec3(shadow_shader, "directional_light.specular", DIRECTIONAL_LIGHT.specular_color);
+    }
 
     
 
@@ -243,6 +244,7 @@ main :: () {
             glViewport(0, 0, windowWidth, windowHeight);
         }
 
+
         CameraUpdate(camera, delta_time_seconds);
 
         SetupRenderSceneToFrameBuffer();
@@ -259,12 +261,12 @@ main :: () {
         // @TODO: improve this by not using a string compare - just use an enum
         SetUniformBufferData("Matrices", size_of(Matrix4) * 2, heehoo_matrices.data);
 
+        
         glUseProgram(shadow_shader);
         {
             directional_light_view_dir : Vector3 = (view * make_vector4(DIRECTIONAL_LIGHT.direction, 0.0)).xyz;
             ShaderSetVec3(shadow_shader, "directional_light.direction", directional_light_view_dir);
             ShaderSetMat4(shadow_shader, "light_space", *light_space);
-            ShaderSetTexture2D(shadow_shader, "shadow_map", depth_map_texture, 2);
 
             model := Matrix4_Identity;
             ShaderSetMat4(shadow_shader, "model", *model);
