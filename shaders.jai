@@ -687,3 +687,107 @@ void main() {
     FragColor = vec4(vec3(depth_value), 1.0);
 }
 DONE
+
+SHADOW_VERTEX_SHADER :: #string DONE
+#version 330 core
+layout (location = 0) in vec3 aPos;
+layout (location = 1) in vec3 aNormal;
+layout (location = 2) in vec2 aTexCoords;
+
+out VS_OUT {
+    vec3 frag_pos_view_space;
+    vec4 frag_pos_light_space;
+    vec3 normal;
+    vec2 tex_coords;
+} vs_out;
+
+layout (std140) uniform Matrices {
+    mat4 projection;
+    mat4 view;
+};
+uniform mat4 model;
+uniform mat4 light_space;
+
+void main () {
+    vec4 frag_pos_world_space = model * vec4(aPos, 1.0);
+    vs_out.frag_pos_view_space = vec3(view * frag_pos_world_space);
+    vs_out.frag_pos_light_space = light_space * frag_pos_world_space;
+    gl_Position = projection * vec4(vs_out.frag_pos_view_space, 1.0);
+
+    vs_out.normal = mat3(view) * mat3(transpose(inverse(model))) * aNormal;
+    vs_out.tex_coords = aTexCoords;
+}
+DONE
+
+BLINN_SHADOW_FRAGMENT_SHADER :: #string DONE
+#version 330 core
+
+out vec4 fragment_color;
+
+in VS_OUT {
+    vec3 frag_pos_view_space;
+    vec4 frag_pos_light_space;
+    vec3 normal;
+    vec2 tex_coords;
+} fs_in;
+
+/*** Structs ***/
+
+struct Material {
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+    float shininess;
+    
+    sampler2D diffuse_map;
+    sampler2D specular_map;
+};
+uniform Material material;
+
+struct DirectionalLight {
+    vec3 direction;
+
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+};
+uniform DirectionalLight directional_light;
+
+uniform sampler2D shadow_map;
+
+/*** Functions ***/
+float CalculateShadow(vec4 frag_pos_light_space) {
+    // for perspective lights you need to divide by w but we're going to omit that here
+    vec3 proj_coords = frag_pos_light_space.xyz * 0.5 + 0.5; // we can omit this too if we adjust ortho matrix
+    float closest_depth = texture(shadow_map, proj_coords.xy).r;
+    float current_depth = proj_coords.z;
+    return current_depth > closest_depth ? 1.0 : 0.0;
+}
+
+vec3 CalculateDirectionalLight(DirectionalLight d_light, vec3 normal, vec3 view_dir) {
+    vec3 light_dir = normalize(-d_light.direction);
+    float diffuse_amount = max(dot(normal, light_dir), 0.0);
+
+    float specular_amount = 0.0;
+    if (diffuse_amount > 0.0) {
+        vec3 halfway_dir = normalize(light_dir + view_dir);
+        specular_amount = pow(max(dot(normal, halfway_dir), 0.0), material.shininess * 2.0);   
+    }
+
+    vec3 ambient = d_light.ambient * vec3(texture(material.diffuse_map, fs_in.tex_coords));
+    vec3 diffuse = d_light.diffuse * diffuse_amount * vec3(texture(material.diffuse_map, fs_in.tex_coords));
+    vec3 specular = d_light.specular * specular_amount * vec3(texture(material.specular_map, fs_in.tex_coords));
+
+    
+    //float shadow = CalculateShadow(fs_in.frag_pos_light_space);
+    //return ambient + ((1.0 - shadow) * (diffuse + specular));
+    return ambient + diffuse + specular;
+}
+
+void main() {
+    vec3 n_normal = normalize(fs_in.normal);
+    vec3 view_dir = normalize(-fs_in.frag_pos_view_space);
+    vec3 result = CalculateDirectionalLight(directional_light, n_normal, view_dir);
+    fragment_color = vec4(result, 1.0);
+}
+DONE

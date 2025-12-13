@@ -85,7 +85,12 @@ PLANE_VERTEX_ATTRIBUTES : [3] VertexAttribute : .[.{3}, .{3}, .{2} ];
 SHADOW_WIDTH    :: 1024;
 SHADOW_HEIGHT   :: 1024;
 
-LIGHT_POS : Vector3 : .{-2.0, 4.0, -1.0};
+DIRECTIONAL_LIGHT :: DirectionalLight.{
+    direction       = .{ 2.0,-4.0, 1.0},    // -pos
+    ambient_color   = .{ 0.2, 0.2, 0.2},
+    diffuse_color   = .{ 0.5, 0.5, 0.5},
+    specular_color  = .{ 1.0, 1.0, 1.0}
+};
 
 DEPTH_QUAD_VERTICES : [20] float : .[
     -1.0,  1.0, 0.0, 0.0, 1.0,
@@ -126,7 +131,7 @@ main :: () {
         using cube_mesh.material;
         diffuse_texture = BuildFromTextureLibrary("textures/marble.jpg", .DIFFUSE);
         specular_texture = BuildFromTextureLibrary("textures/white_pixel.jpg", .SPECULAR);
-        shininess = 32.0;
+        shininess = 64.0;
     }
     defer FreeMesh(*cube_mesh);
 
@@ -143,11 +148,14 @@ main :: () {
         ShaderSetInt(depth_quad_shader, "depth_map", 0);
     }
     // cube_shader := CreateShader(CUBE_VERTEX_SHADER, BLINN_CUBE_FRAGMENT_SHADER);
-    
 
-    
-
-    
+    shadow_shader := CreateShader(SHADOW_VERTEX_SHADER, BLINN_SHADOW_FRAGMENT_SHADER);
+    {
+        glUseProgram(shadow_shader);
+        ShaderSetVec3(shadow_shader, "directional_light.ambient", DIRECTIONAL_LIGHT.ambient_color);
+        ShaderSetVec3(shadow_shader, "directional_light.diffuse", DIRECTIONAL_LIGHT.diffuse_color);
+        ShaderSetVec3(shadow_shader, "directional_light.specular", DIRECTIONAL_LIGHT.specular_color);
+    }
 
     depth_map_fbo : GLuint;
     depth_map_texture : GLuint;
@@ -177,6 +185,7 @@ main :: () {
     
 
     
+    
 
     
     
@@ -198,17 +207,19 @@ main :: () {
         
         near_plane := 1.0;
         far_plane := 7.5;
+        light_space : Matrix4;
         {
             glUseProgram(simple_depth_shader);
 
             light_projection := orthographic_projection_matrix(-10.0, 10.0, -10.0, 10.0, near_plane, far_plane);
-            light_view := make_look_at_matrix(LIGHT_POS, make_vector3(0.0), .{0.0, 1.0, 0.0}, false);
-            light_space := light_projection * light_view;
-            // @TODO maybe theres something wrong with these matrices???
+            // in LearnOpenGL this "look_at" function seems to roll the camera as well
+            // it doesnt do it here and it probably ought to not do that. Just FYI
+            light_view := make_look_at_matrix(-DIRECTIONAL_LIGHT.direction, make_vector3(0.0), .{0.0, 1.0, 0.0}, false);
+            light_space = light_projection * light_view;
             
             ShaderSetMat4(simple_depth_shader, "light_space", *light_space);
 
-            // render
+            // render all things in scene
             glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
             glBindFramebuffer(GL_FRAMEBUFFER, depth_map_fbo);
             glClear(GL_DEPTH_BUFFER_BIT);
@@ -227,11 +238,51 @@ main :: () {
             }
 
             glBindFramebuffer(GL_FRAMEBUFFER, 0); // done rendering light depth pass
+
+            // set viewport back
+            glViewport(0, 0, windowWidth, windowHeight);
         }
 
-        glViewport(0, 0, windowWidth, windowHeight);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        CameraUpdate(camera, delta_time_seconds);
 
+        SetupRenderSceneToFrameBuffer();
+
+        view := CameraGetViewMatrix(camera);
+        projection := make_projection_matrix(DegToRad(camera.fov), GetWindowWidth().(float)/GetWindowHeight(), 0.1, 100.0);
+        // normally these get transposed when being fed into shader.
+        // since we are not doing that anymore, we need to transpose them before
+        // feeding them to uniform buffer. (Ugly!!)
+        transposed_view := transpose(view);
+        transposed_proj := transpose(projection);
+        heehoo_matrices : [2] Matrix4 = .[transposed_proj, transposed_view];
+
+        // @TODO: improve this by not using a string compare - just use an enum
+        SetUniformBufferData("Matrices", size_of(Matrix4) * 2, heehoo_matrices.data);
+
+        glUseProgram(shadow_shader);
+        {
+            directional_light_view_dir : Vector3 = (view * make_vector4(DIRECTIONAL_LIGHT.direction, 0.0)).xyz;
+            ShaderSetVec3(shadow_shader, "directional_light.direction", directional_light_view_dir);
+            ShaderSetMat4(shadow_shader, "light_space", *light_space);
+            ShaderSetTexture2D(shadow_shader, "shadow_map", depth_map_texture, 2);
+
+            model := Matrix4_Identity;
+            ShaderSetMat4(shadow_shader, "model", *model);
+            DrawMesh(plane_mesh, shadow_shader);
+
+            for cube_pos : CUBE_POSITIONS {
+                model = Matrix4_Identity;
+                translate(*model, cube_pos);
+                if it_index == 2 RotateMatrix4(*model, #run DegToRad(60.0), #run normalize(Vector3.{1.0, 0.0, 1.0}));
+                scale(*model, ifx it_index != 2 then 0.5 else 0.25);
+                ShaderSetMat4(shadow_shader, "model", *model);
+                DrawMesh(cube_mesh, shadow_shader);
+            }
+        }
+
+        RenderFrameBufferToScreen();
+
+        /*
         {
             glUseProgram(depth_quad_shader);
             ShaderSetFloat(depth_quad_shader, "near_plane", near_plane);
@@ -245,6 +296,7 @@ main :: () {
         }
 
         SwapBuffers();
+        */
 
         reset_temporary_storage();
     }
