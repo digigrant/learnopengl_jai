@@ -86,17 +86,17 @@ SHADOW_WIDTH    :: 1024;
 SHADOW_HEIGHT   :: 1024;
 
 DIRECTIONAL_LIGHT :: DirectionalLight.{
-    direction       = .{ 2.0,-4.0, 1.0},    // -pos
-    ambient_color   = .{ 0.2, 0.2, 0.2},
-    diffuse_color   = .{ 0.5, 0.5, 0.5},
-    specular_color  = .{ 1.0, 1.0, 1.0}
+    direction       = .{ 2.0,-4.0, 1.0 },    // -pos
+    ambient_color   = .{ 0.2, 0.2, 0.2 },
+    diffuse_color   = .{ 0.5, 0.5, 0.5 },
+    specular_color  = .{ 1.0, 1.0, 1.0 }
 };
 
 DEPTH_QUAD_VERTICES : [20] float : .[
-    -1.0,  1.0, 0.0, 0.0, 1.0,
-    -1.0, -1.0, 0.0, 0.0, 0.0,
-    1.0,  1.0, 0.0, 1.0, 1.0,
-    1.0, -1.0, 0.0, 1.0, 0.0,
+    0.2, 1.0, 0.0, 0.0, 1.0,
+    0.2, 0.2, 0.0, 0.0, 0.0,
+    1.0, 1.0, 0.0, 1.0, 1.0,
+    1.0, 0.2, 0.0, 1.0, 0.0,
 ];
 
 DEPTH_QUAD_VERTEX_ATTRIBUTES : [2] VertexAttribute : .[ .{3}, .{2} ];
@@ -207,6 +207,10 @@ main :: () {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // light depth pass
+
+        t_matrix := Matrix4_Identity;
+        RotateMatrix4(*t_matrix, DegToRad(curr_time_seconds * 20.0), .{0, 1, 0});
+        current_light_dir := (t_matrix * make_vector4(DIRECTIONAL_LIGHT.direction, 0.0)).xyz;
         
         near_plane := 1.0;
         far_plane := 7.5;
@@ -217,7 +221,7 @@ main :: () {
             light_projection := orthographic_projection_matrix(-10.0, 10.0, -10.0, 10.0, near_plane, far_plane);
             // in LearnOpenGL this "look_at" function seems to roll the camera as well
             // it doesnt do it here and it probably ought to not do that. Just FYI
-            light_view := make_look_at_matrix(-DIRECTIONAL_LIGHT.direction, make_vector3(0.0), .{0.0, 1.0, 0.0}, false);
+            light_view := make_look_at_matrix(-current_light_dir, make_vector3(0.0), .{0.0, 1.0, 0.0}, false);
             light_space = light_projection * light_view;
             
             ShaderSetMat4(simple_depth_shader, "light_space", *light_space);
@@ -270,7 +274,7 @@ main :: () {
         
         glUseProgram(shadow_shader);
         {
-            directional_light_view_dir : Vector3 = (view * make_vector4(DIRECTIONAL_LIGHT.direction, 0.0)).xyz;
+            directional_light_view_dir : Vector3 = (view * make_vector4(current_light_dir, 0.0)).xyz;
             ShaderSetVec3(shadow_shader, "directional_light.direction", directional_light_view_dir);
             ShaderSetMat4(shadow_shader, "light_space", *light_space);
 
@@ -288,10 +292,6 @@ main :: () {
             }
         }
 
-        RenderFrameBufferToScreen();
-        
-
-        /*
         {
             glUseProgram(depth_quad_shader);
             ShaderSetFloat(depth_quad_shader, "near_plane", near_plane);
@@ -304,9 +304,7 @@ main :: () {
             glBindVertexArray(0);
         }
 
-        SwapBuffers();
-        */
-        
+        RenderFrameBufferToScreen();
 
         reset_temporary_storage();
     }
