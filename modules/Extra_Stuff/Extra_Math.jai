@@ -3,6 +3,13 @@
 DEG2RAD : float : PI/180.0;
 RAD2DEG : float : 180.0/PI;
 
+V3_POS_X :: Vector3.{ 1.0, 0.0, 0.0};
+V3_NEG_X :: Vector3.{-1.0, 0.0, 0.0};
+V3_POS_Y :: Vector3.{ 0.0, 1.0, 0.0};
+V3_NEG_Y :: Vector3.{ 0.0,-1.0, 0.0};
+V3_POS_Z :: Vector3.{ 0.0, 0.0, 1.0};
+V3_NEG_Z :: Vector3.{ 0.0, 0.0,-1.0};
+
 DegToRad :: (deg : float) -> rad : float { return deg * DEG2RAD; }
 RadToDeg :: (rad : float) -> deg : float { return rad * DEG2RAD; }
 

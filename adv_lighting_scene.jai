@@ -84,6 +84,7 @@ PLANE_VERTEX_ATTRIBUTES : [3] VertexAttribute : .[.{3}, .{3}, .{2} ];
 
 SHADOW_WIDTH    :: 1024;
 SHADOW_HEIGHT   :: 1024;
+SHADOW_ASPECT_RATIO :: cast(float) SHADOW_WIDTH / SHADOW_HEIGHT;
 
 DIRECTIONAL_LIGHT :: DirectionalLight.{
     direction       = .{ 2.0,-4.0, 1.0 },    // -pos
@@ -142,6 +143,12 @@ main :: () {
     /*** SHADERS ***/
 
     simple_depth_shader := CreateShader(SIMPLE_DEPTH_VERTEX_SHADER, SIMPLE_DEPTH_FRAGMENT_SHADER);
+
+    simple_depth_cubemap_shader := CreateShader(
+        SIMPLE_DEPTH_CUBEMAP_VERTEX_SHADER,
+        SIMPLE_DEPTH_CUBEMAP_FRAGMENT_SHADER,
+        SIMPLE_DEPTH_CUBEMAP_GEOMETRY_SHADER);
+
     depth_quad_shader := CreateShader(DEPTH_QUAD_VERTEX_SHADER, DEPTH_QUAD_FRAGMENT_SHADER);
     {
         glUseProgram(depth_quad_shader);
@@ -152,10 +159,10 @@ main :: () {
     
 
     depth_map_fbo : GLuint;
+    glGenFramebuffers(1, *depth_map_fbo);
+
     depth_map_texture : GLuint;
     {
-        glGenFramebuffers(1, *depth_map_fbo);
-
         glGenTextures(1, *depth_map_texture);
         glBindTexture(GL_TEXTURE_2D, depth_map_texture);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, null);
@@ -176,6 +183,30 @@ main :: () {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
+    depth_cube_map_texture : GLuint;
+    {
+        glGenTextures(1, *depth_cube_map_texture);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, depth_cube_map_texture);
+        for 0..5 glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + it, 0,
+            GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, null);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, depth_map_fbo);
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depth_cube_map_texture, 0);
+        glDrawBuffer(GL_NONE);  // we have to do this to specify that we dont want to draw color to the frame buffer
+        glReadBuffer(GL_NONE);  // same
+        if glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE {
+            print("ERROR::FRAMEBUFFER:: Depth framebuffer is not complete!");
+        }
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+
+
+
     shadow_shader := CreateShader(SHADOW_VERTEX_SHADER, BLINN_SHADOW_FRAGMENT_SHADER);
     {
         glUseProgram(shadow_shader);
@@ -185,7 +216,10 @@ main :: () {
         ShaderSetVec3(shadow_shader, "directional_light.specular", DIRECTIONAL_LIGHT.specular_color);
     }
 
+
     
+    
+
 
     
     
@@ -206,12 +240,13 @@ main :: () {
         glClearColor(0.1, 0.1, 0.1, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // light depth pass
-
+        // spin the directional light
         t_matrix := Matrix4_Identity;
         RotateMatrix4(*t_matrix, DegToRad(curr_time_seconds * 20.0), .{0, 1, 0});
         current_light_dir := (t_matrix * make_vector4(DIRECTIONAL_LIGHT.direction, 0.0)).xyz;
         
+        // light depth pass
+
         near_plane := 1.0;
         far_plane := 7.5;
         light_space : Matrix4;
@@ -253,6 +288,22 @@ main :: () {
             // set viewport back
             glViewport(0, 0, windowWidth, windowHeight);
         }
+
+
+        near := 1.0;
+        far := 25.0;
+        shadow_projection := make_projection_matrix(#run DegToRad(90.0), SHADOW_ASPECT_RATIO, near, far);   // optional param for depth_range_01
+        shadow_transforms : *[6] Matrix4 = temporary_alloc(6 * size_of(Matrix4));
+        {
+            shadow_transforms.*[0] = shadow_projection * make_look_at_matrix(point_light_pos, point_light_pos + V3_POS_X, V3_NEG_Y, false);
+            shadow_transforms.*[1] = shadow_projection * make_look_at_matrix(point_light_pos, point_light_pos + V3_NEG_X, V3_NEG_Y, false);
+            shadow_transforms.*[2] = shadow_projection * make_look_at_matrix(point_light_pos, point_light_pos + V3_POS_Y, V3_POS_Z, false);
+            shadow_transforms.*[3] = shadow_projection * make_look_at_matrix(point_light_pos, point_light_pos + V3_NEG_Y, V3_NEG_Z, false);
+            shadow_transforms.*[4] = shadow_projection * make_look_at_matrix(point_light_pos, point_light_pos + V3_POS_Z, V3_NEG_Y, false);
+            shadow_transforms.*[5] = shadow_projection * make_look_at_matrix(point_light_pos, point_light_pos + V3_NEG_Z, V3_NEG_Y, false);
+        }
+
+
 
         
         CameraUpdate(camera, delta_time_seconds);

@@ -760,9 +760,8 @@ float CalculateShadow(vec4 frag_pos_light_space, vec3 normal, vec3 light_dir) {
     // for perspective lights you need to divide by w but we're going to omit that here
     vec3 proj_coords = frag_pos_light_space.xyz / frag_pos_light_space.w;
     proj_coords = (proj_coords * 0.5) + 0.5; // we can omit this too if we adjust ortho matrix
-    if (proj_coords.z > 1.0) { return 0.0; }
+    if (proj_coords.z > 1.0) { return 0.0; }    // if depth is greater than 1.0, shadow amount is guaranteed to be 0
 
-    //float closest_depth = texture(shadow_map, proj_coords.xy).r;
     float current_depth = proj_coords.z;    // depth of the fragment being checked
     float bias = max(0.05 * (1.0 - dot(normal, light_dir)), 0.005);
 
@@ -807,4 +806,53 @@ void main() {
     vec3 result = CalculateDirectionalLight(directional_light, n_normal, view_dir);
     fragment_color = vec4(result, 1.0);
 }
+DONE
+
+SIMPLE_DEPTH_CUBEMAP_VERTEX_SHADER :: #string DONE
+#version 330 core
+layout (location = 0) in vec3 aPos;
+
+uniform mat4 model;
+
+void main() {
+    gl_Position = model * vec4(aPos, 1.0);
+}
+DONE
+
+SIMPLE_DEPTH_CUBEMAP_GEOMETRY_SHADER :: #string DONE
+#version 330 core
+layout (triangles) in;
+layout (triangle_strip, max_vertices = 18) out;
+
+uniform mat4 shadow_matrices[6];
+
+out vec4 frag_pos;
+
+void main() {
+    for (int face = 0; face < 6; ++face) {
+        gl_Layer = face; // built-in variable: which face of cubemap to render to
+
+        for (int i = 0; i < 3; ++i) {   // for each vertex of the input triangle
+            frag_pos = gl_in[i].gl_Position;
+            gl_Position = shadow_matrices[face] * frag_pos;
+            EmitVertex();
+        }
+        EndPrimitive();
+    }
+}
+DONE
+
+SIMPLE_DEPTH_CUBEMAP_FRAGMENT_SHADER :: #string DONE
+#version 330 core
+in vec4 frag_pos;
+
+uniform vec3 light_pos;
+uniform float far_plane;
+
+void main() {
+    // here we're just rolling our own linear depth value
+    float light_distance = length(frag_pos.xyz - light_pos);
+    gl_FragDepth = light_distance / far_plane;
+}
+
 DONE
