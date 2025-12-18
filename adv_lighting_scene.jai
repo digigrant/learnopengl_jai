@@ -277,7 +277,7 @@ main :: () {
     point_light : PointLight;
     {
         using point_light;
-        position = .{ 0.0, 0.0, 0.0 };
+        position = .{ 2.0, 2.0, 0.0 };
 
         ambient_color = .{ 0.2, 0.2, 0.2 };
         diffuse_color = .{ 0.5, 0.5, 0.5 };
@@ -338,6 +338,7 @@ main :: () {
         RotateMatrix4(*t_matrix, DegToRad(curr_time_seconds * 20.0), .{0, 1, 0});
         current_light_dir := (t_matrix * make_vector4(DIRECTIONAL_LIGHT.direction, 0.0)).xyz;
         */
+        
 
         /*
         near_plane := 1.0;
@@ -381,6 +382,12 @@ main :: () {
         */
 
 
+        // spin the point light
+        t_matrix := Matrix4_Identity;
+        RotateMatrix4(*t_matrix, DegToRad(curr_time_seconds * 20.0), .{0, 1, 0});
+        point_light_pos := (t_matrix * make_vector4(point_light.position, 1.0)).xyz;
+
+
         near := 1.0;
         far := 25.0;
         {   // render to depth cubemap
@@ -392,7 +399,7 @@ main :: () {
             glUseProgram(simple_depth_cubemap_shader);
             ShaderSetFloat(simple_depth_cubemap_shader, "far_plane", far);
 
-            point_light_pos := point_light.position;
+            //point_light_pos := point_light.position;
 
             ShaderSetVec3(simple_depth_cubemap_shader, "light_pos", point_light_pos);
             shadow_projection := make_projection_matrix(#run DegToRad(90.0), SHADOW_ASPECT_RATIO, near, far);   // optional param for depth_range_01
@@ -449,7 +456,8 @@ main :: () {
         SetupRenderSceneToFrameBuffer();
         glViewport(0, 0, windowWidth, windowHeight);    // should maybe move to function
 
-        /* Debug skybox
+        
+        /*
         // draw skybox last
         glUseProgram(skybox_shader);
         {
@@ -500,13 +508,15 @@ main :: () {
         */
 
         
-        glViewport(0, 0, windowWidth, windowHeight);
+        
 
-        point_light_view_pos := (view * make_vector4(point_light.position, 1.0)).xyz;
+        
+        point_light_view_pos := (view * make_vector4(point_light_pos, 1.0)).xyz;
 
         {   // render scene (point lights)
             glUseProgram(omnidirectional_shadow_shader);
             ShaderSetVec3(omnidirectional_shadow_shader, "point_lights[0].position", point_light_view_pos);
+            ShaderSetVec3(omnidirectional_shadow_shader, "point_light_pos_world_space", point_light_pos);
             ShaderSetFloat(omnidirectional_shadow_shader, "far_plane", far);
 
             model := Matrix4_Identity;
@@ -527,11 +537,12 @@ main :: () {
             glUseProgram(point_light_shader);
 
             model := Matrix4_Identity;
-            translate(*model, point_light.position);
+            translate(*model, point_light_pos);
             scale(*model, 0.1);
             ShaderSetMat4(point_light_shader, "model", *model);
             DrawMesh(cube_mesh, point_light_shader);
         }
+        
 
         /*
         {   // render depth PIP window

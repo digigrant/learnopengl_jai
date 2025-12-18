@@ -866,6 +866,7 @@ layout (location = 2) in vec2 aTexCoords;
 // cubemap is sampled using direction vector
 out VS_OUT {
     vec3 frag_pos_view_space;
+    vec3 frag_pos_world_space;
     vec3 normal;
     vec2 tex_coords;
 } vs_out;
@@ -877,7 +878,8 @@ layout (std140) uniform Matrices {
 uniform mat4 model;
 
 void main () {
-    vs_out.frag_pos_view_space = vec3(view * model * vec4(aPos, 1.0));
+    vs_out.frag_pos_world_space = vec3(model * vec4(aPos, 1.0));
+    vs_out.frag_pos_view_space = vec3(view * vec4(vs_out.frag_pos_world_space, 1.0));
     vs_out.normal = mat3(view) * mat3(transpose(inverse(model))) * aNormal;
     vs_out.tex_coords = aTexCoords;
     gl_Position = projection * vec4(vs_out.frag_pos_view_space, 1.0);
@@ -891,6 +893,7 @@ out vec4 fragment_color;
 
 in VS_OUT {
     vec3 frag_pos_view_space;
+    vec3 frag_pos_world_space;
     vec3 normal;
     vec2 tex_coords;
 } fs_in;
@@ -926,6 +929,8 @@ struct PointLight {
 uniform PointLight point_lights[MAX_POINT_LIGHTS];
 uniform int num_point_lights;
 
+uniform vec3 point_light_pos_world_space;
+
 /*** Functions ***/
 float CalculateShadow(vec3 light_pos_view_space) {
     /*
@@ -952,7 +957,7 @@ float CalculateShadow(vec3 light_pos_view_space) {
     return shadow / 9.0;
     */
 
-    vec3 frag_light_dir = fs_in.frag_pos_view_space - light_pos_view_space;
+    vec3 frag_light_dir = fs_in.frag_pos_world_space - point_light_pos_world_space;
     // sample cubemap and convert from NDC to world coordinates
     float closest_depth = texture(shadow_map, frag_light_dir).r * far_plane;
     float current_depth = length(frag_light_dir);
