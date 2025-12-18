@@ -104,8 +104,16 @@ ShaderSetMat4 :: (shaderId : u32, name : string, mat4 : *Matrix4) {
 }
 
 ShaderSetTexture2D :: (shader_id : u32, name : string, texture_id : GLuint, binding_slot : u8 = 0) {
+    #run print("***\nShaderSetTexture2D is being deprecated. Switch it to ShaderSetTexture.\n***\n");
     glActiveTexture(cast(u32) GL_TEXTURE0 + binding_slot);
     glBindTexture(GL_TEXTURE_2D, texture_id);
+    ShaderSetInt(shader_id, name, binding_slot);
+    // we keep this active and bound - is that good?? who knows
+}
+
+ShaderSetTexture :: (shader_id : u32, name : string, texture_id : GLuint, texture_target : GLenum = GL_TEXTURE_2D, binding_slot : u8 = 0) {
+    glActiveTexture(cast(u32) GL_TEXTURE0 + binding_slot);
+    glBindTexture(texture_target, texture_id);
     ShaderSetInt(shader_id, name, binding_slot);
     // we keep this active and bound - is that good?? who knows
 }

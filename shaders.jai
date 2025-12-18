@@ -854,5 +854,141 @@ void main() {
     float light_distance = length(frag_pos.xyz - light_pos);
     gl_FragDepth = light_distance / far_plane;
 }
+DONE
 
+OMNIDIRECTIONAL_SHADOWS_VERTEX_SHADER :: #string DONE
+#version 330 core
+layout (location = 0) in vec3 aPos;
+layout (location = 1) in vec3 aNormal;
+layout (location = 2) in vec2 aTexCoords;
+
+// no light space position or transformation is needed here;
+// cubemap is sampled using direction vector
+out VS_OUT {
+    vec3 frag_pos_view_space;
+    vec3 normal;
+    vec2 tex_coords;
+} vs_out;
+
+layout (std140) uniform Matrices {
+    mat4 projection;
+    mat4 view;
+};
+uniform mat4 model;
+
+void main () {
+    vs_out.frag_pos_view_space = vec3(view * model * vec4(aPos, 1.0));
+    vs_out.normal = mat3(view) * mat3(transpose(inverse(model))) * aNormal;
+    vs_out.tex_coords = aTexCoords;
+    gl_Position = projection * vec4(vs_out.frag_pos_view_space, 1.0);
+}
+DONE
+
+OMNIDIRECTIONAL_SHADOWS_FRAGMENT_SHADER :: #string DONE
+#version 330 core
+
+out vec4 fragment_color;
+
+in VS_OUT {
+    vec3 frag_pos_view_space;
+    vec3 normal;
+    vec2 tex_coords;
+} fs_in;
+
+/*** Structs ***/
+
+struct Material {
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+    float shininess;
+    
+    sampler2D diffuse_map;
+    sampler2D specular_map;
+};
+uniform Material material;
+
+uniform samplerCube shadow_map;
+uniform float far_plane;
+
+struct PointLight {
+    vec3 position;
+
+    float constant;
+    float linear;
+    float quadratic;
+
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+};
+#define MAX_POINT_LIGHTS 4
+uniform PointLight point_lights[MAX_POINT_LIGHTS];
+uniform int num_point_lights;
+
+/*** Functions ***/
+float CalculateShadow(vec3 light_pos_view_space) {
+    /*
+    // for perspective lights you need to divide by w but we're going to omit that here
+    vec3 proj_coords = frag_pos_light_space.xyz / frag_pos_light_space.w;
+    proj_coords = (proj_coords * 0.5) + 0.5; // we can omit this too if we adjust ortho matrix
+    if (proj_coords.z > 1.0) { return 0.0; }    // if depth is greater than 1.0, shadow amount is guaranteed to be 0
+
+    float current_depth = proj_coords.z;    // depth of the fragment being checked
+    float bias = max(0.05 * (1.0 - dot(normal, light_dir)), 0.005);
+
+    // percentage-closer filtering
+    // check adjacent texels and average the result
+    float shadow = 0.0;
+    vec2 texel_size = 1.0 / textureSize(shadow_map, 0);
+    float pcf_depth = 0.0;
+    for (int x = -1; x <= 1; ++x) {
+        for (int y = -1; y <= 1; ++y) {
+            pcf_depth = texture(shadow_map, proj_coords.xy + (vec2(x, y) * texel_size)).r;
+            shadow += current_depth - bias > pcf_depth ? 1.0 : 0.0;
+        }
+    }
+    
+    return shadow / 9.0;
+    */
+
+    vec3 frag_light_dir = fs_in.frag_pos_view_space - light_pos_view_space;
+    // sample cubemap and convert from NDC to world coordinates
+    float closest_depth = texture(shadow_map, frag_light_dir).r * far_plane;
+    float current_depth = length(frag_light_dir);
+
+    float bias = 0.05;
+    return current_depth - bias > closest_depth ? 1.0 : 0.0;
+
+}
+
+vec3 CalculatePointLight(PointLight p_light, vec3 normal, vec3 frag_pos, vec3 view_dir) {
+    vec3 light_dir = normalize(p_light.position - frag_pos);
+    float diffuse_amount = max(dot(normal, light_dir), 0.0);
+
+    vec3 halfway_dir = normalize(light_dir + view_dir);
+    float specular_amount = pow(max(dot(normal, halfway_dir), 0.0), material.shininess * 2.0);
+
+    vec3 ambient = p_light.ambient * vec3(texture(material.diffuse_map, fs_in.tex_coords));
+    vec3 diffuse = p_light.diffuse * diffuse_amount * vec3(texture(material.diffuse_map, fs_in.tex_coords));
+    vec3 specular = p_light.specular * specular_amount * vec3(texture(material.diffuse_map, fs_in.tex_coords));
+
+    float distance = length(p_light.position - frag_pos);
+    //float attenuation = 1.0 / (p_light.constant + (p_light.linear * distance)); // + (p_light.quadratic * distance * distance));
+    float attenuation = 1.0 / (distance * distance); // + (p_light.quadratic * distance * distance));
+
+    float shadow = CalculateShadow(p_light.position);
+
+    return (ambient + ((1.0 - shadow) * (diffuse + specular))) * attenuation;
+}
+
+void main() {
+    vec3 n_normal = normalize(fs_in.normal);
+    vec3 view_dir = normalize(-fs_in.frag_pos_view_space);
+    vec3 result = vec3(0.0f);
+    for (int i = 0; i < num_point_lights; ++i) {
+        result += CalculatePointLight(point_lights[i], n_normal, fs_in.frag_pos_view_space, view_dir);
+    }
+    fragment_color = vec4(result, 1.0);
+}
 DONE
