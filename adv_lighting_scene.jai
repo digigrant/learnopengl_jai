@@ -277,7 +277,7 @@ main :: () {
     point_light : PointLight;
     {
         using point_light;
-        position = .{ 0.5, 0.0, 0.0 };
+        position = .{ 2.0, 2.0, 0.0 };
 
         ambient_color = .{ 0.2, 0.2, 0.2 };
         diffuse_color = .{ 0.5, 0.5, 0.5 };
