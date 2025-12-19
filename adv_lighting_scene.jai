@@ -277,7 +277,7 @@ main :: () {
     point_light : PointLight;
     {
         using point_light;
-        position = .{ 2.0, 2.0, 0.0 };
+        position = .{ 0.5, 0.0, 0.0 };
 
         ambient_color = .{ 0.2, 0.2, 0.2 };
         diffuse_color = .{ 0.5, 0.5, 0.5 };
@@ -388,7 +388,7 @@ main :: () {
         point_light_pos := (t_matrix * make_vector4(point_light.position, 1.0)).xyz;
 
 
-        near := 1.0;
+        near := 0.5;
         far := 25.0;
         {   // render to depth cubemap
             glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);

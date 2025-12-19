@@ -932,38 +932,27 @@ uniform int num_point_lights;
 uniform vec3 point_light_pos_world_space;
 
 /*** Functions ***/
-float CalculateShadow(vec3 light_pos_view_space) {
-    /*
-    // for perspective lights you need to divide by w but we're going to omit that here
-    vec3 proj_coords = frag_pos_light_space.xyz / frag_pos_light_space.w;
-    proj_coords = (proj_coords * 0.5) + 0.5; // we can omit this too if we adjust ortho matrix
-    if (proj_coords.z > 1.0) { return 0.0; }    // if depth is greater than 1.0, shadow amount is guaranteed to be 0
-
-    float current_depth = proj_coords.z;    // depth of the fragment being checked
-    float bias = max(0.05 * (1.0 - dot(normal, light_dir)), 0.005);
-
-    // percentage-closer filtering
-    // check adjacent texels and average the result
-    float shadow = 0.0;
-    vec2 texel_size = 1.0 / textureSize(shadow_map, 0);
-    float pcf_depth = 0.0;
-    for (int x = -1; x <= 1; ++x) {
-        for (int y = -1; y <= 1; ++y) {
-            pcf_depth = texture(shadow_map, proj_coords.xy + (vec2(x, y) * texel_size)).r;
-            shadow += current_depth - bias > pcf_depth ? 1.0 : 0.0;
-        }
-    }
-    
-    return shadow / 9.0;
-    */
-
+float CalculateShadow() {
     vec3 frag_light_dir = fs_in.frag_pos_world_space - point_light_pos_world_space;
     // sample cubemap and convert from NDC to world coordinates
-    float closest_depth = texture(shadow_map, frag_light_dir).r * far_plane;
     float current_depth = length(frag_light_dir);
 
+    float shadow = 0.0;
     float bias = 0.05;
-    return current_depth - bias > closest_depth ? 1.0 : 0.0;
+    float samples = 4.0;
+    float offset = 0.1;
+
+    float closest_depth;
+
+    for (float x = -offset; x < offset; x += offset / (samples * 0.5)) {
+        for (float y = -offset; y < offset; y += offset / (samples * 0.5)) {
+            for (float z = -offset; z < offset; z += offset / (samples * 0.5)) {
+                closest_depth = texture(shadow_map, frag_light_dir + vec3(x, y, z)).r * far_plane;
+                if (current_depth - bias > closest_depth) shadow += 1.0;
+            }
+        }    
+    }
+    return shadow / (samples * samples * samples);
 
 }
 
@@ -982,7 +971,7 @@ vec3 CalculatePointLight(PointLight p_light, vec3 normal, vec3 frag_pos, vec3 vi
     //float attenuation = 1.0 / (p_light.constant + (p_light.linear * distance)); // + (p_light.quadratic * distance * distance));
     float attenuation = 1.0 / (distance * distance); // + (p_light.quadratic * distance * distance));
 
-    float shadow = CalculateShadow(p_light.position);
+    float shadow = CalculateShadow();
 
     return (ambient + ((1.0 - shadow) * (diffuse + specular))) * attenuation;
 }
