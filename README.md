@@ -19,3 +19,40 @@ TODO:
   - better API
 - particle systems
 - animations
+
+Engine
+- engine initializes all systems and controls flow
+  - Systems: Graphics, Input, Scene, Events
+  - calls init, update, render, exit
+  - engine shutdown
+Scene system
+- manages active scene and transitions between scenes
+Scene
+- manages entities in scene
+  - one or more entity containers; group objects by functionality
+  - Containers: opaque meshes, blendable meshes, lights, skybox* (only ever 1 skybox at a time), cameras* (can be multiple but only 1 is active)
+  - 
+- Scene Load & Init: everything before the main loop basically
+  - Load: allocating memory for entities, fetching data from library or loading from file. What needs to be done once per scene no matter how many times we restart?
+  - Init: setting initial values for entities and scene. what needs to be reset when scene is restarted?
+- Scene Update & Render/Draw: everything in the main loop
+  - (input) -> update -> draw
+  - Draw (per frame):
+    - first, render shadow maps for lighting
+      - set up shadow viewport, frame buffer, etc
+      - render to texture/cubemap
+    - second, render opaque meshes using lighting
+      - set up render viewport, frame buffer, etc
+      - send dirty camera view and projection matrices to uniform buffer
+    - third, render skybox
+    - fourth, render blendable meshes
+    - fifth, draw to the screen
+- Scene Unload: everything after main loop
+  - what needs to be manually shutdown? what can be safely tossed when the game closes?
+
+Implementation Notes
+1. implement Transform
+2. implement Entity
+3. implement Scene
+4. implement Engine
+5. implement SceneManager
