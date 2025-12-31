@@ -2,6 +2,7 @@
 #import "GL"; // we only need this for any GL features we enable in main - just temporary
 #import "Math";
 #import "Extra_Stuff";
+#import "Asset_Importer";
 
 using,except (Init, Shutdown) Graphics :: #import "Graphics";
 using,except (Init, Shutdown) Input :: #import "Input";
@@ -42,6 +43,8 @@ main :: () {
     }
 
     shader := CreateShader(VERTEX_SHADER, FRAGMENT_SHADER);
+
+    ReadShadersFromFile("shaders");
 
     // main loop
     // timekeeping
