@@ -1,5 +1,9 @@
 # learnopengl_jai
 
+https://github.com/user-attachments/assets/606357dd-119e-4cdd-9e18-6f7f2894a58b
+
+<img width="1920" height="1080" alt="vlcsnap-2026-01-08-01h39m36s114" src="https://github.com/user-attachments/assets/329a0a21-9f4b-4971-ad80-0ba2069a24d3" />
+
 TODO:
 - make sure disabling (aka not using) render buffer works
   - allow us to choose which buffer to render onto the screen (i.e. debug buffer)
