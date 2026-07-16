@@ -27,7 +27,7 @@ SetTransformScale :: (transform : *Transform, scale : Vector3) {
 CalculateTransformModelMatrix :: (transform : *Transform) {
     using,except(scale) transform.*;
 
-    /* TODO: rewrite this rotation_matrix stuff to use quaternions or rotors */
+    // @TODO: rewrite this rotation_matrix stuff to use quaternions or rotors
     rotation_matrix := Matrix4_Identity;
     RotateMatrix4(*rotation_matrix, DegToRad(rotation_deg.y), V3_POS_Y);
     RotateMatrix4(*rotation_matrix, DegToRad(rotation_deg.x), V3_POS_X);
@@ -39,9 +39,4 @@ CalculateTransformModelMatrix :: (transform : *Transform) {
     translate(*model, position);
 
     is_dirty = false;
-}
-
-CalculateTransformModelMatrix :: (transform : *Transform, parent_model : Matrix4) {
-    CalculateTransformModelMatrix(transform);
-    transform.model = parent_model * transform.model;
 }

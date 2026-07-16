@@ -23,15 +23,11 @@ AddChildToParentEntity :: (parent : *Entity, child : *Entity) {
 UpdateEntityAndChildren :: (entity : *Entity) {
     using entity.*;
 
+    // We assume parent entity is already clean, i.e. top-down approach
+    // If child entities can modify parent then this needs to be changed
     if transform.is_dirty {
-        if parent {
-            CalculateTransformModelMatrix(*transform, parent.transform.model);
-        } else {
-            CalculateTransformModelMatrix(*transform);   
-        }
-
-        for i : 0..num_children-1 CalculateTransformModelMatrix(*(children[i].transform), transform.model);
-        return;
+        CalculateTransformModelMatrix(*transform);
+        if parent { transform.model = parent.transform.model * transform.model; }
     }
 
     for i : 0..num_children-1 UpdateEntityAndChildren(children[0] + i);
