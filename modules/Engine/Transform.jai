@@ -1,3 +1,6 @@
+#import "Math";
+#import "Extra_Stuff";
+
 Transform :: struct {   // 100 bytes
     position : Vector3      = .{ 0.0, 0.0, 0.0 };
     rotation_deg : Vector3  = .{ 0.0, 0.0, 0.0 };

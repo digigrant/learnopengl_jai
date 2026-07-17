@@ -7,17 +7,17 @@ Entity :: struct {
     transform : Transform;
 };
 
-AddChildToParentEntity :: (parent : *Entity, child : *Entity) {
+AddChildToParentEntity :: (parent : *Entity, child : *Entity) -> ok : bool {
     using,except(parent) parent.*;
-    if num_children >= ENTITY_MAX_CHILDREN {
-        print("Max children reached.\n");
-        return;
-    }
+
+    if num_children >= ENTITY_MAX_CHILDREN return false;
 
     children[num_children] = child;
     num_children += 1;
 
     child.parent = parent;
+
+    return true;
 }
 
 UpdateEntityAndChildren :: (entity : *Entity) {
