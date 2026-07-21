@@ -1,10 +1,18 @@
 ENTITY_MAX_CHILDREN :: 8;
 
 Entity :: struct {
+    data : *EntityData;
+    prototype : *EntityPrototype;
     children : [ENTITY_MAX_CHILDREN] *Entity;
     num_children : int;
     parent : *Entity;
     transform : Transform;
+};
+
+EntityData :: struct {
+    name : string;
+    prototype_name : string;
+    starting_transform : Transform;
 };
 
 AddChildToParentEntity :: (parent : *Entity, child : *Entity) -> ok : bool {
@@ -31,4 +39,11 @@ UpdateEntityAndChildren :: (entity : *Entity) {
     }
 
     for i : 0..num_children-1 UpdateEntityAndChildren(children[0] + i);
+}
+
+CreateEntityFromData :: (data : *EntityData) -> Status {
+    if !data return STATUS_FAILED;
+
+    using data.*;
+    entity_prototype := FindEntityPrototype(name);
 }
