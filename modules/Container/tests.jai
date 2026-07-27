@@ -197,14 +197,16 @@ test_find_int :: () {
     result : *int = null;
     result_status : Status;
 
-    Equals30 :: (item : *int) -> bool { return item.* == 30; }
-    result, result_status = FindInContainer(my_container, Equals30);
+    Equals :: (item : *int, args : *void) -> bool { return item.* == (cast(*int) args).*; }
+    find_value := 30;
+
+    result, result_status = FindInContainer(my_container, Equals, *find_value);
     assert(result != null);
-    assert(result.* == 30);
+    assert(result.* == find_value);
     assert(result_status == STATUS_SUCCESS);
 
-    Equals67 :: (item : *int) -> bool { return item.* == 67; }
-    result, result_status = FindInContainer(my_container, Equals67);
+    find_value = 67;
+    result, result_status = FindInContainer(my_container, Equals, *find_value);
     assert(result == null);
     assert(result_status == STATUS_SUCCESS);
 }
