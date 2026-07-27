@@ -41,12 +41,17 @@ operator *[] :: (container : *Container($T), index : int) -> *T {
 }
 
 for_expansion :: (container : Container, body : Code, flags : For_Flags) #expand {
-    if container.count > 0 {
-        for index : 0..container.count-1 {
-        `it_index := index;
-        `it := (cast (*container.T) (container.head + (index * container.item_size))).*;
+    DO_POINTER :: cast(bool) (flags & .POINTER);
+    DO_REVERSE :: cast(bool) (flags & .REVERSE);
 
-        #insert body;
+    if container.count > 0 {
+        p_item : *container.T;
+        for <=DO_REVERSE `it_index : 0..container.count-1 {
+            p_item = cast(*container.T) (container.head + (it_index * container.item_size));
+            #if DO_POINTER `it := p_item;
+            else `it := p_item.*;
+
+            #insert body;
         }
     }
 }
@@ -91,13 +96,10 @@ AddToContainer :: (container : *Container($T), item : *T) -> Status {
     return STATUS_SUCCESS;
 }
 
-/*
-FindInContainer :: (container : *Container($T, $N), predicate : *(item : *T) -> bool) -> *T {
-    if !container return STATUS_FAILURE_NO_CONTAINER_GIVEN;
-    if !predicate return STATUS_FAILURE_NO_PREDICATE_GIVEN;
+FindInContainer :: (container : *Container($T), predicate : (item : *T) -> bool) -> *T, Status {
+    if !container return null, STATUS_FAILURE_NO_CONTAINER_GIVEN;
+    if !predicate return null, STATUS_FAILURE_NO_PREDICATE_GIVEN;
 
-    using container.*;
-    for * array if predicate(it) return it;
-    return null;
+    for * container if predicate(it) return it, STATUS_SUCCESS;
+    return null, STATUS_SUCCESS;
 }
-*/
