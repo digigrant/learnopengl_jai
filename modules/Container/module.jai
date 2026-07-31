@@ -94,3 +94,7 @@ FindInContainer :: (container : *Container($T), predicate : (*T, *void) -> bool,
     for * container if predicate(it, args) return it, STATUS_SUCCESS;
     return null, STATUS_SUCCESS;
 }
+
+// Predicate for searching by name
+HasName :: struct { name : string; }
+NameEquals :: (item : *$T/interface HasName, args : *void) -> bool { return item.*.name == (cast(*string) args).*; }

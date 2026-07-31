@@ -4,6 +4,46 @@
 
 #load "module.jai";
 
+// *** STRUCT DECLARATIONS ***
+
+IceCream :: struct {
+    name : string;
+    scoops : int;
+    chocolate_sauce : bool;
+    walnuts : bool;
+};
+
+// *** CONST DEFINITIONS ***
+
+ice_creams : [4] IceCream : .[
+    .{
+        name = "Alice",
+        scoops = 2,
+        chocolate_sauce = false,
+        walnuts = true
+    },
+    .{
+        name = "Bob",
+        scoops = 3,
+        chocolate_sauce = true,
+        walnuts = true
+    },
+    .{
+        name = "Carl",
+        scoops = 1,
+        chocolate_sauce = true,
+        walnuts = false
+    },
+    .{
+        name = "Ploob",
+        scoops = 10,
+        chocolate_sauce = false,
+        walnuts = false
+    }
+];
+
+// *** TEST DEFINITIONS ***
+
 test_create_int_container_success :: () {
     my_container := CreateContainer(int, 5);
 
@@ -19,13 +59,6 @@ test_create_int_container_success :: () {
     assert(item_size == size_of(int));
     for my_container assert(it == 0);
 }
-
-IceCream :: struct {
-    customer_name : string;
-    scoops : int;
-    chocolate_sauce : bool;
-    walnuts : bool;
-};
 
 test_create_struct_container_success :: () {
     print("size of struct: %\n", size_of(IceCream));
@@ -73,33 +106,7 @@ test_add_to_int_container_success :: () {
 
 test_add_to_struct_container_success :: () {
     my_container := CreateContainer(IceCream, 3);
-    ice_creams : [4] IceCream : .[
-        .{
-            customer_name = "Alice",
-            scoops = 2,
-            chocolate_sauce = false,
-            walnuts = true
-        },
-        .{
-            customer_name = "Bob",
-            scoops = 3,
-            chocolate_sauce = true,
-            walnuts = true
-        },
-        .{
-            customer_name = "Carl",
-            scoops = 1,
-            chocolate_sauce = true,
-            walnuts = false
-        },
-        .{
-            customer_name = "Ploob",
-            scoops = 10,
-            chocolate_sauce = false,
-            walnuts = false
-        }
-    ];
-
+    
     result_status : Status;
 
     for 0..2 {
@@ -211,6 +218,59 @@ test_find_int :: () {
     assert(result_status == STATUS_SUCCESS);
 }
 
+test_find_struct_by_name :: () {
+    my_container := CreateContainer(IceCream, 3);
+
+    result_status : Status;
+
+    for 0..2 result_status = AddToContainer(my_container, *(ice_creams[it]));
+    
+    PrintContainer(my_container);
+
+    result : *IceCream;
+    name_to_search : string = "Carl";
+    result, result_status = FindInContainer(my_container, NameEquals, *name_to_search);
+    assert(result != null);
+    print("%\n", result.*);
+    assert(result.*.name == "Carl");
+    assert(result_status == STATUS_SUCCESS);
+
+    name_to_search = "Tupac";
+    result, result_status = FindInContainer(my_container, NameEquals, *name_to_search);
+    assert(result == null);
+    assert(result_status == STATUS_SUCCESS);
+}
+
+/*
+Coffee :: struct {
+    size : int;
+    creams : int;
+    sugars : int;
+};
+
+coffees : [3] Coffee : .[
+    .{ 16, 1, 1 },
+    .{ 20, 2, 4 },
+    .{ 12, 0, 0 }
+];
+
+test_find_struct_not_by_name :: () {
+    my_container := CreateContainer(Coffee, 3);
+
+    result_status : Status;
+
+    for 0..2 result_status = AddToContainer(my_container, *(coffees[it]));
+    
+    PrintContainer(my_container);
+
+    result : *Coffee;
+    name_to_search : string = "Carl";
+    result, result_status = FindInContainer(my_container, NameEquals, *name_to_search);
+    assert(result != null);
+    assert(result_status == STATUS_SUCCESS);
+}
+*/
+
 #run {
     set_build_options_dc(.{do_output=false});
 
@@ -220,5 +280,7 @@ test_find_int :: () {
     RUN_TEST(test_add_to_struct_container_success);
     RUN_TEST(test_reset_container);
     RUN_TEST(test_find_int);
+    RUN_TEST(test_find_struct_by_name);
+    //RUN_TEST(test_find_struct_not_by_name);
     RUN_TEST(test_container_for_expansion);
 }
