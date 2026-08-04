@@ -1,4 +1,49 @@
+#import "Basic";
 #import "File";
+#import "Status";
+#import "Container";
+#import "Asset_Importer";
+
+MAX_COUNT_MATERIAL_LIBRARY :: 100;
+MATERIAL_ASSET_DIRECTORY :: "assets//materials//";
+material_library : *Container(Material);
+
+InitMaterialLibrary :: () -> Status {
+    status : Status;
+    material_library, status = CreateContainer(Material, MAX_COUNT_MATERIAL_LIBRARY);
+
+    if !IS_SUCCESSFUL(status) {
+        print("Failed to create material library: %\n", status);
+        return STATUS_FAILURE;
+    }
+
+    base_file := tprint("%//_base", MATERIAL_ASSET_DIRECTORY);
+    file, ok := read_entire_file(base_file);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #scope_file
 
