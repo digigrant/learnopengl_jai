@@ -1,0 +1,7 @@
+newmtl black_rubber
+Ka 0.02 0.02 0.02
+Kd 0.01 0.01 0.01
+Ks 0.4 0.4 0.4
+Ns 10.0
+d 1.0
+illum 2

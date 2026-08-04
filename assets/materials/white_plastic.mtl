@@ -1,0 +1,7 @@
+newmtl white_plastic
+Ka 0.0 0.0 0.0
+Kd 0.55 0.55 0.55
+Ks 0.70 0.70 0.70
+Ns 32
+d 1.0
+illum 2
