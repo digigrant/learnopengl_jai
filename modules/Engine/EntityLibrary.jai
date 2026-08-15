@@ -47,7 +47,7 @@ InitEntityRecipeLibrary :: () -> Status {
     return STATUS_SUCCESS;
 }
 
-STATUS_FAILURE_RECIPE_ALREADY_EXISTS_IN_LIBRARY :: LOCAL_STATUS_PREFIX | 1;
+#run RegisterStatus(#code STATUS_FAILURE_RECIPE_ALREADY_EXISTS_IN_LIBRARY);
 
 AddEntityRecipeToLibrary :: (p_recipe : *EntityRecipe) -> Status {
     if !p_recipe return STATUS_FAILURE;
@@ -62,7 +62,7 @@ AddEntityRecipeToLibrary :: (p_recipe : *EntityRecipe) -> Status {
     return STATUS_SUCCESS;
 }
 
-STATUS_FAILURE_COULDNT_READ_FILE : Status : LOCAL_STATUS_PREFIX | 2;
+#run RegisterStatus(#code STATUS_FAILURE_COULDNT_READ_FILE);
 
 ImportFileToEntityLibrary :: (path : string) -> Status {
     file, ok := read_entire_file(path);

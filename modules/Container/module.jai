@@ -1,11 +1,11 @@
 #import "Basic";    // align_forward()
 
 #import "Status";
-STATUS_FAILURE_NO_CONTAINER_GIVEN ::    LOCAL_STATUS_PREFIX | 1;
-STATUS_FAILURE_NO_ITEM_GIVEN ::         LOCAL_STATUS_PREFIX | 2;
-STATUS_FAILURE_NO_PREDICATE_GIVEN ::    LOCAL_STATUS_PREFIX | 3;
-STATUS_FAILURE_CONTAINER_FULL ::        LOCAL_STATUS_PREFIX | 4;
 
+#run RegisterStatus(#code STATUS_FAILURE_NO_CONTAINER_GIVEN);
+#run RegisterStatus(#code STATUS_FAILURE_NO_ITEM_GIVEN);
+#run RegisterStatus(#code STATUS_FAILURE_NO_PREDICATE_GIVEN);
+#run RegisterStatus(#code STATUS_FAILURE_CONTAINER_FULL);
 
 // *** STRUCT DEFINITON ***
 Container :: struct ($T : Type) {
