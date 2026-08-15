@@ -11,6 +11,8 @@ allowed to write back to them.
 | [`docs/architecture.md`](../docs/architecture.md) | project | read-write | **Mandatory, session start** — what this project is and how its modules fit together |
 | [`docs/build-and-run.md`](../docs/build-and-run.md) | project | read-write | **Mandatory, session start** — how to compile, run, and test anything in this repo |
 | `~/jai-notes/INDEX.md` | shared (outside this repo) | read-write repo (mostly read; append confirmed findings to the file it indexes them under) | **Mandatory before any question** about Jai language/stdlib/compiler-metaprogramming behavior. Load that index first and follow its own routing — do not duplicate its contents here |
+| `~/claude-shared/git-workflow.md` | shared (outside this repo) | read-write repo (do not modify unless requested to) | **Mandatory, session start** |
+| `~/claude-shared/task-execution.md` | shared (outside this repo) | read-write repo (do not modify unless requested to) | **Mandatory, session start** |
 
 ## Conventions
 
